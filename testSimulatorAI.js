@@ -168,9 +168,9 @@ console.log("New Map After Spawn: ")
 let spawnNewMap = spawnEntityRandom("", exMap);
 console.log(spawnNewMap);
 let percA = calcPercMap(spawnNewMap, "A");
-percW = calcPercMap(exMap, "W");
-percT = calcPercMap(exMap, "T");
-percG = calcPercMap(exMap, "G");
+percW = calcPercMap(spawnNewMap, "W");
+percT = calcPercMap(spawnNewMap, "T");
+percG = calcPercMap(spawnNewMap, "G");
 console.log("A = " + percA + " %");
 console.log("W = " + percW + " %");
 console.log("T = " + percT + " %");
