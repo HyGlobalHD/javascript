@@ -177,3 +177,54 @@ console.log("T = " + percT + " %");
 console.log("G = " + percG + " %");
 
 
+function displayMap(map) {
+    let T = "<img src='img/T.jpg' width='20' height='20'>";
+    let G = "<img src='img/G.png' width='20' height='20'>";
+    let W = "<img src='img/W.jpg' width='20' height='20'>";
+    let newLine = "<br>";
+
+    let mapId = document.getElementById("MAP");
+
+    mapId.innerHTML = "";
+
+
+    for(let i = 0; i < map.length; i++) {
+        for(let j = 0; j < map[i].length; j++) {
+
+            if(map[i][j] === "T") {
+                mapId.innerHTML = mapId.innerHTML + T;
+            } else if(map[i][j] === "G") {
+                mapId.innerHTML = mapId.innerHTML + G;
+            } else if(map[i][j] === "W") {
+                mapId.innerHTML = mapId.innerHTML + W;
+            }
+
+            if(j >= map[i].length - 1){
+                mapId.innerHTML = mapId.innerHTML + newLine;
+            }
+        }
+    }
+
+}
+
+let arr = [
+    "img/G.png",
+    "img/T.jpg",
+    "img/W.jpg"
+  ];
+
+function preloadImg(url) {
+    const img = new Image();
+    img.src = url;
+    return img;
+}
+
+function preloadImages(images) {
+    for (var i = 0; i < images.length; i++) {
+      images[i] = preloadImg(images[i]);
+    }
+    return images;
+  }
+
+const images = preloadImages(arr);
+console.dir(images);
