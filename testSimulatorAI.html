@@ -5,7 +5,25 @@
   <title>Marked in the browser</title>
 </head>
 <body>
-  hi, look at console.
+  
+  console or here
+
+<label>X Size: </label>
+<input type="range" id="xSizeI" value="20" min="1" max="50" oninput="document.getElementById('xSize').innerHTML = this.value" />
+<label id="xSize">20</label>
+
+
+<label>Y Size: </label>
+<input type="range" id="ySizeI" value="20" min="1" max="50" oninput="document.getElementById('ySize').innerHTML = this.value" />
+<label id="ySize">20</label>
+
+<button onmousedown="displayMap(generateTerrain(document.getElementById('xSize').innerHTML,document.getElementById('ySize').innerHTML));">CLICK</button>
+
+  <div id="MAP"></div>
+<!--
+  <img src="img/G.png" height="20" width="20"><img src="img/T.jpg" height="20" width="20"><img src="img/W.jpg" height="20" width="20">
+  <br><img src="img/G.png" height="20" width="20"><img src="img/T.jpg" height="20" width="20"><img src="img/W.jpg" height="20" width="20">
+-->
   <script src="testSimulatorAI.js"></script>
 </body>
 </html>
