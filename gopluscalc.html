@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <h1>This is just a basic calculation for Go+ returns</h1>
+    <p>For my own usages.</p>
+
+        <table>
+            <tr>
+                <td>Curent Total Savings: </td>
+                <td><input id="currSavings" type="number" value="0"></td>
+                <td>Eg: 41.41</td>
+            </tr>
+            <tr>
+                <td>Dummy P.A%: </td>
+                <td><input id="currPA" type="number" value="0">%</td>
+                <td>Eg: 1.5</td>
+            </tr>
+            <tr>
+                <td>Target Monthly Input: </td>
+                <td><input id="monthlyInput" type="number" value="0"></td>
+                <td>Eg: 100</td>
+            </tr>
+            <tr>
+                <td>Target how many years: </td>
+                <td><input id="howManyYear" type="number" value="0">year</td>
+                <td>Eg: 2</td>
+            </tr>
+            <tr>
+                <td><button id="calc" onmousedown="displayO()">Calculate</button></td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <td>Output: </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Total after Per day: </td>
+                <td><input id="outputPD" type="number" readonly></td>
+            </tr>
+            <tr>
+                <td>Total after a month: </td>
+                <td><input id="outputPM" type="number" readonly></td>
+            </tr>
+            <tr>
+                <td>Total after inputed year:</td>
+            <td><input id="outputYS" type="number" readonly></td>
+        </tr>
+        </table>
+        
+        <table>
+            <tr>
+                <td>Output without pa% calc: </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Total after inputed year:</td>
+            <td><input id="outputYSN" type="number" readonly></td>
+        </tr>
+        </table>
+    
+  <script src="goplusreturncal.js"></script>
+</body>
+</html>
