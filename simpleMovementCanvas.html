@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="simulation"></canvas>
+
+    <script>
+        // create a simulation of prey and predator that move around the screen
+        // the predator will chase the prey
+        // the prey will run away from the predator
+
+        // prey object
+        var prey = {
+            x: 0,
+            y: 0,
+            speed: 100,
+            size: 30,
+            color: "red",
+            draw: function () {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            },
+            move: function () {
+                // random movement
+                let randomTrueOrFalse = Math.random() >= 0.5;
+                if (randomTrueOrFalse) {
+                    this.x += Math.random() * this.speed;
+                    this.y += Math.random() * this.speed;
+                } else {
+                    this.x -= Math.random() * this.speed;
+                    this.y -= Math.random() * this.speed;
+                }
+            }
+        };
+        // predator object
+        var predator = {
+            x: 0,
+            y: 0,
+            speed: 100,
+            size: 30,
+            color: "blue",
+            draw: function () {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            },
+            move: function () {
+                // random movement
+                let randomTrueOrFalse = Math.random() >= 0.5;
+                if (randomTrueOrFalse) {
+                    this.x += Math.random() * this.speed;
+                    this.y += Math.random() * this.speed;
+                } else {
+                    this.x -= Math.random() * this.speed;
+                    this.y -= Math.random() * this.speed;
+                }
+            }
+        };
+        // canvas object
+        var canvas = document.getElementById("simulation");
+        var ctx = canvas.getContext("2d");
+        // set the canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // set the prey and predator to random positions
+        prey.x = Math.floor(Math.random() * canvas.width);
+        prey.y = Math.floor(Math.random() * canvas.height);
+        predator.x = Math.floor(Math.random() * canvas.width);
+        predator.y = Math.floor(Math.random() * canvas.height);
+
+        // draw the prey and predator
+        prey.draw();
+        predator.draw();
+        // set the interval to move the prey and predator
+        setInterval(function () {
+            // clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // move the prey and predator
+            prey.move();
+            predator.move();
+
+            // check if prey and predator at edge of canvas
+            // if prey at edge of canvas, set prey to random position
+            if (prey.x > canvas.width - prey.size || prey.x < 0) {
+                prey.x = Math.floor(Math.random() * canvas.width);
+            }
+            if (prey.y > canvas.height - prey.size || prey.y < 0) {
+                prey.y = Math.floor(Math.random() * canvas.height);
+            }
+            // if predator at edge of canvas, set predator to random position
+            if (predator.x > canvas.width - predator.size || predator.x < 0) {
+                predator.x = Math.floor(Math.random() * canvas.width);
+            }
+            if (predator.y > canvas.height - predator.size || predator.y < 0) {
+                predator.y = Math.floor(Math.random() * canvas.height);
+            }
+
+            // check if the prey is caught by the predator
+            if (prey.x < predator.x + predator.size &&
+                prey.x + prey.size > predator.x &&
+                prey.y < predator.y + predator.size &&
+                prey.y + prey.size > predator.y) {
+                // if caught, set the prey to a random position
+                prey.x = Math.floor(Math.random() * canvas.width);
+                prey.y = Math.floor(Math.random() * canvas.height);
+            }
+            // draw the prey and predator
+            prey.draw();
+            predator.draw();
+        }, 500);
+    </script>
+</body>
+
+</html>
