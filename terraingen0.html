@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="simulation"></canvas>
+
+    <script>
+        // generate a terrain where green is grass, brown is dirt, and black is rock, blue is water, brown is tree
+        var terrain = [];
+        for (var i = 0; i < 100; i++) {
+            terrain[i] = [];
+            for (var j = 0; j < 100; j++) {
+                if (Math.random() < 0.1) {
+                    terrain[i][j] = "green";
+                } else if (Math.random() < 0.2) {
+                    terrain[i][j] = "brown";
+                } else if (Math.random() < 0.3) {
+                    terrain[i][j] = "black";
+                } else if (Math.random() < 0.4) {
+                    terrain[i][j] = "blue";
+                } else if (Math.random() < 0.5) {
+                    terrain[i][j] = "brown";
+                } else {
+                    terrain[i][j] = "green";
+                }
+            }
+        }
+        // input it into the canvas
+        var canvas = document.getElementById("simulation");
+        var ctx = canvas.getContext("2d");
+        // set canvas size into the screen
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        var width = canvas.width;
+        var height = canvas.height;
+        var cellWidth = width / terrain.length;
+        var cellHeight = height / terrain[0].length;
+        for (var i = 0; i < terrain.length; i++) {
+            for (var j = 0; j < terrain[i].length; j++) {
+                ctx.fillStyle = terrain[i][j];
+                ctx.fillRect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
+            }
+        }
+    </script>
+</body>
+
+</html>

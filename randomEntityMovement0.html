@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="simulation"></canvas>
+
+    <script>
+        // simulate human behavior
+        var human = {
+            x: 0,
+            y: 0,
+            speed: 1,
+            direction: 0,
+            turn: function(direction) {
+                this.direction = direction;
+            },
+            walk: function() {
+                this.x += this.speed * Math.sin(this.direction);
+                this.y += this.speed * Math.cos(this.direction);
+            }
+        };
+
+        // simulate zombie behavior
+        var zombie = {
+            x: 0,
+            y: 0,
+            speed: 1,
+            direction: 0,
+            turn: function(direction) {
+                this.direction = direction;
+            },
+            walk: function() {
+                this.x += this.speed * Math.sin(this.direction);
+                this.y += this.speed * Math.cos(this.direction);
+            }
+        };
+
+        // simulate the canvas
+        var canvas = document.getElementById('simulation');
+        var context = canvas.getContext('2d');
+
+        // set canvas size to window size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        var width = canvas.width;
+        var height = canvas.height;
+        // draw the background
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, width, height);
+        // draw the human
+        context.fillStyle = '#0f0';
+        context.beginPath();
+        context.arc(human.x, human.y, 5, 0, 2 * Math.PI);
+        context.fill();
+        // draw the zombie
+        context.fillStyle = '#f00';
+        context.beginPath();
+        context.arc(zombie.x, zombie.y, 5, 0, 2 * Math.PI);
+        context.fill();
+        // draw the line
+        context.strokeStyle = '#fff';
+        context.beginPath();
+        context.moveTo(human.x, human.y);
+        context.lineTo(zombie.x, zombie.y);
+        context.stroke();
+        
+        // update the human and zombie position
+        function update() {
+
+
+            human.walk();
+            zombie.walk();
+            // draw the human
+            context.fillStyle = '#0f0';
+            context.beginPath();
+            context.arc(human.x, human.y, 5, 0, 2 * Math.PI);
+            context.fill();
+            // draw the zombie
+            context.fillStyle = '#f00';
+            context.beginPath();
+            context.arc(zombie.x, zombie.y, 5, 0, 2 * Math.PI);
+            context.fill();
+            // draw the line
+            context.strokeStyle = '#fff';
+            context.beginPath();
+            context.moveTo(human.x, human.y);
+            context.lineTo(zombie.x, zombie.y);
+            context.stroke();
+
+            // don't allow the human to go out of the canvas
+            if (human.x < 0) {
+                human.x = 0;
+            }
+            if (human.x > width) {
+                human.x = width;
+            }
+            if (human.y < 0) {
+                human.y = 0;
+            }
+            if (human.y > height) {
+                human.y = height;
+            }
+            // don't allow the zombie to go out of the canvas
+            if (zombie.x < 0) {
+                zombie.x = 0;
+            }
+            if (zombie.x > width) {
+                zombie.x = width;
+            }
+            if (zombie.y < 0) {
+                zombie.y = 0;
+            }
+            if (zombie.y > height) {
+                zombie.y = height;
+            }
+
+        }
+        // update the position every 100ms
+        setInterval(update, 100);
+
+        // update the human and zombie direction
+        function updateDirection() {
+            // don't allow human and zombie to walk through the canvas
+            if (human.x < 0 || human.x > width || human.y < 0 || human.y > height) {
+            var direction = Math.random() * 2 * Math.PI;
+                human.turn(direction + Math.PI);
+            } else {
+            var direction = Math.random() * 2 * Math.PI;
+            human.turn(direction);
+            }
+            if (zombie.x < 0 || zombie.x > width || zombie.y < 0 || zombie.y > height) {
+            var direction = Math.random() * 2 * Math.PI;
+                zombie.turn(direction + Math.PI);
+            } else {
+            var direction = Math.random() * 2 * Math.PI;
+            zombie.turn(direction);
+            }
+
+        }
+        // update the direction every 1000ms
+        setInterval(updateDirection, 1000);
+
+        // update the human and zombie speed
+        function updateSpeed() {
+            human.speed = Math.random() * 5;
+            zombie.speed = Math.random() * 5;
+        }
+        // update the speed every 5000ms
+        setInterval(updateSpeed, 5000);
+
+        
+    </script>
+</body>
+</html>
