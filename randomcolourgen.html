@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button id="generaterandomterrain">Generate</button>
+    <button id="resetterrain">Reset</button>
+    <button id="deleteone">Delete One</button>
+    <button id="convert">Convert</button>
+    <button id="convertremove">Convert and Delete All not in canvas</button>
+    <button id="resetcanvas">Reset Canvas</button>
+    <button id="download">Download</button>
+    <div id="randomcolourterrain"></div>
+    <canvas id="tempcanvas"></canvas>
+
+    <script>
+        // generate random terrain by colour the table cells with random colours after clicking the button
+        document.getElementById("generaterandomterrain").addEventListener("click", function () {
+            var randomcolourterrain = document.getElementById("randomcolourterrain");
+            var table = document.createElement("table");
+            var tablebody = document.createElement("tbody");
+
+            table.setAttribute("cellpadding", "10");
+            // set the table cell spacing
+            table.setAttribute("cellspacing", "0");
+            // get user input for the number of rows and columns
+            var rows = parseInt(prompt("Enter the number of rows: "));
+            var columns = parseInt(prompt("Enter the number of columns: "));
+            // create the table
+            for (var i = 0; i < rows; i++) {
+                var row = document.createElement("tr");
+                for (var j = 0; j < columns; j++) {
+                    var cell = document.createElement("td");
+                    // random RGBA and HSLA colours
+                    var r = Math.floor(Math.random() * 256);
+                    var g = Math.floor(Math.random() * 256);
+                    var b = Math.floor(Math.random() * 256);
+
+                    var h = Math.floor(Math.random() * 360);
+                    var s = Math.floor(Math.random() * 100);
+                    var l = Math.floor(Math.random() * 100);
+
+                    var a = Math.random();
+
+                    var randomTrueOrFalse = Math.random() >= 0.5;
+                    if (randomTrueOrFalse) {
+                        var randomAorNot = Math.random() >= 0.5;
+                        if(randomAorNot) {
+                            cell.style.backgroundColor = "rgba(" + r + "," + g + "," + b + "," + a + ")";
+                        } else {
+                            cell.style.backgroundColor = "rgba(" + r + "," + g + "," + b + ")";
+                        }
+                        //cell.style.backgroundColor = "rgba(" + r + "," + g + "," + b + "," + a + ")";
+                    } else {
+                        var randomAorNot = Math.random() >= 0.5;
+                        if(randomAorNot) {
+                            cell.style.backgroundColor = "hsl(" + h + "," + s + "%," + l + "%," + a + ")";
+                        } else {
+                            cell.style.backgroundColor = "hsl(" + h + "," + s + "%," + l + "%)";
+                        }
+                        //cell.style.backgroundColor = "hsla(" + h + "," + s + "%," + l + "%," + a + ")";
+                    }
+                    /*
+                    // set the background colour of the cell
+                    cell.style.backgroundColor = "rgb(" + r + "," + g + "," + b + ")";
+                    // set the text colour of the cell
+                    cell.style.color = "hsl(" + h + "," + s + "%," + l + "%)";
+
+                    cell.style.backgroundColor = "rgb(" + Math.floor(Math.random() * 256) + "," + Math.floor(Math.random() * 256) + "," + Math.floor(Math.random() * 256) + ")";*/
+                    row.appendChild(cell);
+                }
+                tablebody.appendChild(row);
+            }
+            table.appendChild(tablebody);
+            randomcolourterrain.appendChild(table);
+        });
+
+        // reset the terrain by removing the table
+        document.getElementById("resetterrain").addEventListener("click", function () {
+            var randomcolourterrain = document.getElementById("randomcolourterrain");
+            randomcolourterrain.innerHTML = "";
+        });
+
+        // delete one table by removing the last generated table
+        document.getElementById("deleteone").addEventListener("click", function () {
+            var randomcolourterrain = document.getElementById("randomcolourterrain");
+            var table = randomcolourterrain.lastElementChild;
+            randomcolourterrain.removeChild(table);
+        });
+
+        // take all the data in randomcolourterrain and convert it to a canvas
+        document.getElementById("convert").addEventListener("click", function () {
+            var randomcolourterrain = document.getElementById("randomcolourterrain");
+            var table = randomcolourterrain.lastElementChild;
+            var rows = table.rows.length;
+            var columns = table.rows[0].cells.length;
+            var canvas = document.getElementById("tempcanvas");
+            canvas.width = columns * 20;
+            canvas.height = rows * 20;
+            var ctx = canvas.getContext("2d");
+            for (var i = 0; i < rows; i++) {
+                for (var j = 0; j < columns; j++) {
+                    ctx.fillStyle = table.rows[i].cells[j].style.backgroundColor;
+                    ctx.fillRect(j * 20, i * 20, 20, 20);
+                }
+            }
+        });
+
+        // download the canvas as a png image
+        document.getElementById("download").addEventListener("click", function () {
+            var canvas = document.getElementById("tempcanvas");
+            var link = document.createElement("a");
+            link.download = "terrain.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
+
+        // convert the table data to a canvas and delete all the table data
+        document.getElementById("convertremove").addEventListener("click", function () {
+            var randomcolourterrain = document.getElementById("randomcolourterrain");
+            var table = randomcolourterrain.lastElementChild;
+            var rows = table.rows.length;
+            var columns = table.rows[0].cells.length;
+            var canvas = document.getElementById("tempcanvas");
+            canvas.width = columns * 20;
+            canvas.height = rows * 20;
+            var ctx = canvas.getContext("2d");
+            for (var i = 0; i < rows; i++) {
+                for (var j = 0; j < columns; j++) {
+                    ctx.fillStyle = table.rows[i].cells[j].style.backgroundColor;
+                    ctx.fillRect(j * 20, i * 20, 20, 20);
+                }
+            }
+            randomcolourterrain.innerHTML = "";
+        });
+
+        // reset the canvas and delete the canvas
+        document.getElementById("resetcanvas").addEventListener("click", function () {
+            var canvas = document.getElementById("tempcanvas");
+            canvas.width = 0;
+            canvas.height = 0;
+        });
+
+        
+        /*document.getElementById("convert").addEventListener("click", function () {
+            var randomcolourterrain = document.getElementById("randomcolourterrain");
+            var table = randomcolourterrain.lastElementChild;
+            var rows = table.rows.length;
+            var columns = table.rows[0].cells.length;
+            var canvas = document.getElementById("tempcanvas");
+            canvas.width = columns * 10;
+            canvas.height = rows * 10;
+            var ctx = canvas.getContext("2d");
+            for (var i = 0; i < rows; i++) {
+                for (var j = 0; j < columns; j++) {
+                    ctx.fillStyle = table.rows[i].cells[j].style.backgroundColor;
+                    ctx.fillRect(j * 10, i * 10, 10, 10);
+                }
+            }
+        }); */
+
+
+
+    </script>
+</body>
+
+</html>
