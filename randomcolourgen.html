@@ -52,7 +52,12 @@
                     if (randomTrueOrFalse) {
                         var randomAorNot = Math.random() >= 0.5;
                         if(randomAorNot) {
-                            cell.style.backgroundColor = "rgba(" + r + "," + g + "," + b + "," + a + ")";
+                            
+                    var r = Math.floor(Math.random() * 256);
+                    var g = Math.floor(Math.random() * 256);
+                    var b = Math.floor(Math.random() * 256);
+                            cell.style.backgroundColor = "rgba(" + r + "," + g + "," + b + ")";
+                            //cell.style.backgroundColor = "rgba(" + r + "," + g + "," + b + "," + a + ")";
                         } else {
                             cell.style.backgroundColor = "rgba(" + r + "," + g + "," + b + ")";
                         }
@@ -60,7 +65,12 @@
                     } else {
                         var randomAorNot = Math.random() >= 0.5;
                         if(randomAorNot) {
-                            cell.style.backgroundColor = "hsl(" + h + "," + s + "%," + l + "%," + a + ")";
+                            
+                    var h = Math.floor(Math.random() * 360);
+                    var s = Math.floor(Math.random() * 100);
+                    var l = Math.floor(Math.random() * 100);
+                            cell.style.backgroundColor = "hsl(" + h + "," + s + "%," + l + "%)";
+                            //cell.style.backgroundColor = "hsl(" + h + "," + s + "%," + l + "%," + a + ")";
                         } else {
                             cell.style.backgroundColor = "hsl(" + h + "," + s + "%," + l + "%)";
                         }
