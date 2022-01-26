@@ -1,6 +1,6 @@
 # javascript
-my javascript stuff
-
+my javascript stuff  
+most of it are mostly, using random probability  
 
 Terrain gen note: the larger the size, the more lag it is.
 
