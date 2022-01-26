@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation for Frozen Wonderland Crate in PUBG New State</title>
+</head>
+
+<body>
+
+    <h4>Simulation for Frozen Wonderland Crate in PUBG New State</h4>
+    <div id="listitem"></div>
+
+    <p>Use the button below: </p>
+    <button id="randomlyopen">Randomly Open</button>
+    <button id="randomlyopen10">Randomly Open 10</button>
+    <p>Total Crates Used: <span id="counter"></span></p>
+    <p>Indicator: 
+        White Background, Black Text = 1.75% items <br>
+        Gray Background, Black Text = 0.75% items and 0.70% items <br>
+        Blue Background, Black Text = 0.60% items <br>
+        Green Background, Black Text = 0.50% items and 0.55% items <br>
+        Purple Background, Black Text = 0.40% items and 0.45% items <br>
+        Yelow Background, Black Text = 0.35% items <br>
+        Crimson Background, Black Text = 0.30% items <br>
+        <br>
+        White Background, Red Text = Duplicate Item
+    </p>
+
+
+
+    <script>
+        // Simulation for Frozen Wonderland Crate Drop Rates in PUBG New State
+
+        // list of items and its drop rates
+        // Hi-top Trainers 1.75%
+        // Hi-top Trainers (Blue) 1.75%
+        // Locos Home Uniform 1.75%
+        // Locos Shoes 1.75%
+        // Locos Away Pants 1.75%
+        // Locos Away Jersey 1.75%
+        // Hexadeathimal Sunglasses 1.75%
+        // Locos Hat 1.75%
+        // Lions Home Uniform 1.75%
+        // Lions Shoes 1.75%
+        // Lions Away Pants 1.75%
+        // Lions Away Jersey 1.75%
+        // Lions Hat 1.75%
+        // Tinted Biker Shades 1.75%
+        // Balaclava (Black) 1.75%
+        // Roar Streetwear Slip-ons 1.75%
+        // Vintage Aviator Googles 1.75%
+        // Roar Streetwear Respirator 1.75%
+        // Worn Leather Shoes (Black) 1.75%
+        // Rich Boy T-shirt 1.75%
+        // Timekeeper Sunglasses 1.75%
+        // Tourist Trap Boots 1.75%
+        // Black Tank Top 1.75%
+        // Pillar Tactical Mask 1.75%
+        // Traditional Glasses (Round) 1.75%
+        // Constable's Pants 1.75%
+        // Constable's Gloves 1.75%
+        // Constable's Coat 1.75%
+        // Constable's Hat 1.75%
+        // Paradise Leather Sneakers (Black) 1.75%
+        // Street Art Leggings 1.75%
+        // Avatar Sunglasses (Brass) 1.75%
+        // Paradise Leather Cap (Black) 1.75%
+        // Julie's Black Mystic Boots 1.75%
+        // Julie's Black Mystic Gloves 1.75%
+        // Julie's Black Mystic Uniform 1.75%
+        // Julie's Black Mystic Mask 1.75%
+        // Julie's Black Mystic Googles 1.75%
+        // Street Beat Shoes 1.75%
+        // Street Beat Pants 1.75%
+        // Street Beat Jacket 1.75%
+        // Street Beat Gloves 1.75%
+        // Street Beat Mask 1.75%
+        // Ringside Shoes 0.75%
+        // Ringside Cargo Trunks 0.75%
+        // Ringside Scratch Hoodie 0.75%
+        // Black Beanie and Headphones 0.75%
+        // Aviator Sunglasses 0.70%
+        // Rose-tinted Glasses 0.70%
+        // Schwizard's Moonglow Slippers 0.60%
+        // Schwizard's Shleepy Pants (Rose Pink) 0.60%
+        // Schwizard's Robes (Pale Blue) 0.60%
+        // Schwizard's Hypno-eye Glasses 0.60%
+        // Schwizard's Hat (Green) 0.60%
+        // Artic Digital - SKS 0.60%
+        // Artic Digital - AUG 0.60%
+        // Artic Digital - AWM 0.60%
+        // Artic Digital - M16A4 0.60%
+        // Artic Digital - P92 0.60%
+        // Snow Gun - Skorpion 0.60%
+        // Snow Maiden Gloves 0.60%
+        // Snow Maiden Backpack Lv.1 0.60%
+        // Heavy Fur Coat (Black) 0.55%
+        // Kubanka (Black) 0.55%
+        // Heavy Fur Coat (Red) 0.55%
+        // Kubanka (Red) 0.55%
+        // Heavy Fur Coat (Gold) 0.55%
+        // Kubanka (Gold) 0.55%
+        // Artic Fairy Boots 0.55%
+        // Artic Fairy Costume 0.55%
+        // Artic Fairy Hat 0.55%
+        // Snow Gun - P90 0.55%
+        // Snow Maiden Backpack Lv.2 0.55%
+        // Snow Barrier - Deployable Shield (Wide) 0.50%
+        // Snow Maiden Boots 0.50%
+        // Snow Maiden Helmet Lv.1 0.50%
+        // Snow Gun - SLR 0.45%
+        // Snow Maiden Backpack Lv.3 0.45%
+        // Snow Maiden Helmet Lv.3 0.45%
+        // Snow Maiden Helmet Lv.2 0.45%
+        // Snow Maiden Costume 0.40%
+        // Crystal Queen Tiara 0.40%
+        // Snow Maiden Hat 0.35%
+        // Crytsal Fire - Beryl M762 0.30%
+
+        // put the list of items and its drop rates in an object
+        var items = {
+            "Hi-top Trainers": 0.0175,
+            "Hi-top Trainers (Blue)": 0.0175,
+            "Locos Home Uniform": 0.0175,
+            "Locos Shoes": 0.0175,
+            "Locos Away Pants": 0.0175,
+            "Locos Away Jersey": 0.0175,
+            "Hexadeathimal Sunglasses": 0.0175,
+            "Locos Hat": 0.0175,
+            "Lions Home Uniform": 0.0175,
+            "Lions Shoes": 0.0175,
+            "Lions Away Pants": 0.0175,
+            "Lions Away Jersey": 0.0175,
+            "Lions Hat": 0.0175,
+            "Tinted Biker Shades": 0.0175,
+            "Balaclava (Black)": 0.0175,
+            "Roar Streetwear Slip-ons": 0.0175,
+            "Vintage Aviator Googles": 0.0175,
+            "Roar Streetwear Respirator": 0.0175,
+            "Worn Leather Shoes (Black)": 0.0175,
+            "Rich T-shirt": 0.0175,
+            "Timekeeper Sunglasses": 0.0175,
+            "Tourist Trap Boots": 0.0175,
+            "Black Tank Top": 0.0175,
+            "Pillar Tactical Mask": 0.0175,
+            "Traditional Glasses (Round)": 0.0175,
+            "Constable's Pants": 0.0175,
+            "Constable's Gloves": 0.0175,
+            "Constable's Coat": 0.0175,
+            "Constable's Hat": 0.0175,
+            "Paradise Leather Sneakers (Black)": 0.0175,
+            "Street Art Leggings": 0.0175,
+            "Avatar Sunglasses (Brass)": 0.0175,
+            "Paradise Leather Cap (Black)": 0.0175,
+            "Julie's Black Mystic Boots": 0.0175,
+            "Julie's Black Mystic Gloves": 0.0175,
+            "Julie's Black Mystic Uniform": 0.0175,
+            "Julie's Black Mystic Mask": 0.0175,
+            "Julie's Black Mystic Googles": 0.0175,
+            "Street Beat Shoes": 0.0175,
+            "Street Beat Pants": 0.0175,
+            "Street Beat Jacket": 0.0175,
+            "Street Beat Gloves": 0.0175,
+            "Street Beat Mask": 0.0175,
+            "Ringside Shoes": 0.0075,
+            "Ringside Cargo Trunks": 0.0075,
+            "Ringside Scratch Hoodie": 0.0075,
+            "Black Beanie and Headphones": 0.0075,
+            "Aviator Sunglasses": 0.0070,
+            "Rose-tinted Glasses": 0.0070,
+            "Schwizard's Moonglow Slippers": 0.0060,
+            "Schwizard's Shleepy Pants (Rose Pink)": 0.0060,
+            "Schwizard's Robes (Pale Blue)": 0.0060,
+            "Schwizard's Hypno-eye Glasses": 0.0060,
+            "Schwizard's Hat (Green)": 0.0060,
+            "Artic Digital - SKS": 0.0060,
+            "Artic Digital - AUG": 0.0060,
+            "Artic Digital - AWM": 0.0060,
+            "Artic Digital - M16A4": 0.0060,
+            "Artic Digital - P92": 0.0060,
+            "Snow Gun - Skorpion": 0.0060,
+            "Snow Maiden Gloves": 0.0060,
+            "Snow Maiden Backpack Lv.1": 0.0060,
+            "Heavy Fur Coat (Black)": 0.0055,
+            "Kubanka (Black)": 0.0055,
+            "Heavy Fur Coat (Red)": 0.0055,
+            "Kubanka (Red)": 0.0055,
+            "Heavy Fur Coat (Gold)": 0.0055,
+            "Kubanka (Gold)": 0.0055,
+            "Artic Fairy Boots": 0.0055,
+            "Artic Fairy Costume": 0.0055,
+            "Artic Fairy Hat": 0.0055,
+            "Snow Gun - P90": 0.0055,
+            "Snow Maiden Backpack Lv.2": 0.0055,
+            "Snow Barrier - Deployable Shield (Wide)": 0.0050,
+            "Snow Maiden Boots": 0.0050,
+            "Snow Maiden Helmet Lv.1": 0.0050,
+            "Snow Gun - SLR": 0.0045,
+            "Snow Maiden Backpack Lv.3": 0.0045,
+            "Snow Maiden Helmet Lv.3": 0.0045,
+            "Snow Maiden Helmet Lv.2": 0.0045,
+            "Snow Maiden Costume": 0.0040,
+            "Crystal Queen Tiara": 0.0040,
+            "Snow Maiden Hat": 0.0035,
+            "Crytsal Fire - Beryl M762": 0.0030
+        };
+
+        // put the list of items and its drop rates in an array
+        var itemsArray = Object.keys(items).map(function (key) {
+            return [key, items[key]];
+        });
+
+        // an array for the items that have been dropped
+        var droppedItems = [];
+
+        // counter to count the number of crate opened
+        var crateCounter = 0;
+
+        // display the item and its drop rate
+        var listitem = document.getElementById("listitem");
+        var table = document.createElement("table");
+        var tablebody = document.createElement("tbody");
+
+        // get items length
+        var itemsLength = Object.keys(items).length;
+        // get itemsArray length
+        var itemsArrayLength = itemsArray.length;
+
+        // create a row for each item
+        for (var i = 0; i < itemsArrayLength; i++) {
+            console.log(itemsArray[i]);
+            var row = document.createElement("tr");
+            for (var j = 0; j < 3; j++) {
+                var cell = document.createElement("td");
+                // insert the items and its drop rate from the array into the table
+
+                cell.appendChild(document.createTextNode(itemsArray[itemsArrayLength - 1 - i][0]));
+                cell.appendChild(document.createTextNode(" "));
+                cell.appendChild(document.createTextNode(itemsArray[itemsArrayLength - 1 - i][1]));
+                row.appendChild(cell);
+            }
+            tablebody.appendChild(row);
+        }
+        table.appendChild(tablebody);
+        listitem.appendChild(table);
+
+        // when click randomlyopen button, randomly open an item based on its drop rate
+        var randomopen = document.getElementById("randomlyopen");
+        randomopen.onclick = function () {
+            var random = Math.random();
+            var total = 0;
+            for (var i = 0; i < itemsArrayLength; i++) {
+                total += itemsArray[i][1];
+                if (random < total) {
+
+                    // check if the item has been dropped before
+                    if (droppedItems.indexOf(itemsArray[i][0]) == -1) {
+                        // add the item to the array of dropped items
+                        droppedItems.push(itemsArray[i][0]);
+                        // display the item
+                        var item = document.createElement("span");
+                        // set the item background color
+                        //item.style.backgroundColor = "rgba(60, 255, 255, 0.5)";
+
+                        // if the item drop rate is less than 0.003, set the item background color to yellow
+                        if (itemsArray[i][1] == 0.003) {
+                            // set the item background color to crimson
+                            item.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0035) {
+                            // set the item background colour to yellow
+                            item.style.backgroundColor = "rgba(255, 255, 0, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0040 || itemsArray[i][1] == 0.0045) {
+                            // set the item background colour to purple
+                            item.style.backgroundColor = "rgba(255, 0, 255, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0055 || itemsArray[i][1] == 0.0050) {
+                            // set the item background colour to green
+                            item.style.backgroundColor = "rgba(0, 255, 0, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0060) {
+                            // set the item background colour to blue
+                            item.style.backgroundColor = "rgba(0, 0, 255, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0075 || itemsArray[i][1] == 0.0070) {
+                            // set the item background colour to grey
+                            item.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
+                        }
+
+                        // make a delimiter between the item and its drop rate
+                        item.appendChild(document.createTextNode(itemsArray[i][0]));
+                        item.appendChild(document.createTextNode(" - " + itemsArray[i][1]));
+                        item.appendChild(document.createTextNode(" ; "));
+                        
+                        listitem.appendChild(item);
+
+                        crateCounter++;
+                            disp();
+                        break;
+                    } else {
+                        // if the item has been dropped before, put it as bp
+
+                        var item = document.createElement("span");
+
+                        // set the item background colour to white
+                        item.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
+                        // set the item text colour to red
+                        item.style.color = "rgba(255, 0, 0, 0.5)";
+                        item.appendChild(document.createTextNode(itemsArray[i][0]));
+                        item.appendChild(document.createTextNode(" - " + itemsArray[i][1] + " (BP)"));
+                        item.appendChild(document.createTextNode(" ; "));
+                        listitem.appendChild(item);
+                        
+                        crateCounter++;
+                            disp();
+                        break;
+                    }
+
+                    //alert(itemsArray[i][0] + " " + itemsArray[i][1]);
+                    //droppedItems.push(itemsArray[i][0]);
+                    //break;
+                }
+            }
+        };
+        
+        // when click randomlyopen10 button, randomly open 10 item based on its drop rate
+        var randomopen10 = document.getElementById("randomlyopen10");
+        randomopen10.onclick = function () {
+            var random = Math.random();
+            var total = 0;
+            var max = 10;
+            var getitem = [];
+            for (var i = 0; i < itemsArrayLength; i++) {
+                total += itemsArray[i][1];
+                if (random < total) {
+
+                    // check if the item has been dropped before
+                    if (droppedItems.indexOf(itemsArray[i][0]) == -1) {
+                        // add the item to the array of dropped items
+                        droppedItems.push(itemsArray[i][0]);
+                        // display the item
+                        var item = document.createElement("span");
+                        // set the item background color
+                        //item.style.backgroundColor = "rgba(60, 255, 255, 0.5)";
+                        
+                        // if the item drop rate is less than 0.003, set the item background color to yellow
+                        if (itemsArray[i][1] == 0.003) {
+                            // set the item background color to crimson
+                            item.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0035) {
+                            // set the item background colour to yellow
+                            item.style.backgroundColor = "rgba(255, 255, 0, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0040 || itemsArray[i][1] == 0.0045) {
+                            // set the item background colour to purple
+                            item.style.backgroundColor = "rgba(255, 0, 255, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0055 || itemsArray[i][1] == 0.0050) {
+                            // set the item background colour to green
+                            item.style.backgroundColor = "rgba(0, 255, 0, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0060) {
+                            // set the item background colour to blue
+                            item.style.backgroundColor = "rgba(0, 0, 255, 0.5)";
+                        } else if(itemsArray[i][1] == 0.0075 || itemsArray[i][1] == 0.0070) {
+                            // set the item background colour to grey
+                            item.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
+                        }
+
+                        // make a delimiter between the item and its drop rate
+                        item.appendChild(document.createTextNode(itemsArray[i][0]));
+                        item.appendChild(document.createTextNode(" - " + itemsArray[i][1]));
+                        item.appendChild(document.createTextNode(" ; "));
+                        listitem.appendChild(item);
+                        max--;
+                        
+                        crateCounter++;
+                        if (max == 0) {
+                            disp();
+                            break;
+                        }
+                    } else {
+                        // if the item has been dropped before, put it as bp
+                        var item = document.createElement("span");
+                        // set the item background colour to white
+                        item.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
+                        // set the item text colour to red
+                        item.style.color = "rgba(255, 0, 0, 0.5)";
+                        item.appendChild(document.createTextNode(itemsArray[i][0]));
+                        item.appendChild(document.createTextNode(" - " + itemsArray[i][1] + " (BP)"));
+                        item.appendChild(document.createTextNode(" ; "));
+                        listitem.appendChild(item);
+                        max--;
+                        
+                        crateCounter++;
+                        if (max == 0) {
+                            disp();
+                            break;
+                        }
+                    }
+
+                }
+            }
+        };
+
+        // display crateCounter into counter
+        function disp() {
+            document.getElementById("counter").innerHTML = crateCounter;
+        }
+
+        disp();
+
+
+    </script>
+</body>
+
+</html>
