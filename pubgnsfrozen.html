@@ -6,11 +6,32 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulation for Frozen Wonderland Crate in PUBG New State</title>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+    </style>
 </head>
 
 <body>
 
     <h4>Simulation for Frozen Wonderland Crate in PUBG New State</h4>
+    <p>Created by <a href="https://github.com/HyGlobalHD" target="_blank"
+            style="text-decoration: none; color: red;">@HyGlobalHD</a>
+        <br>
+        Note: This is not the actual how the crates works, what I did here is completely using different methods to
+        simulate the crates.
+    </p>
+    <p><strong>List of items that in Frozen Wonderland Crates</strong>
+        <br>
+        Note: Yes, I really did write them one by one.
+    </p>
     <div id="listitem"></div>
 
     <p>Use the button below: </p>
@@ -21,17 +42,34 @@
     <button id="randomlyopencide10">Randomly Open 10 Using Dice Algorithm</button>
     <br><br>
     <button id="reset">Reset</button>
-    <p>Total Crates Used: <span id="counter"></span></p>
-    <p>Indicator:
-        White Background, Black Text = 1.75% items <br>
-        Gray Background, Black Text = 0.75% items and 0.70% items <br>
-        Blue Background, Black Text = 0.60% items <br>
-        Green Background, Black Text = 0.50% items and 0.55% items <br>
-        Purple Background, Black Text = 0.40% items and 0.45% items <br>
-        Yelow Background, Black Text = 0.35% items <br>
-        Crimson Background, Black Text = 0.30% items <br>
+    <p>
+        Total Crates Used: <span id="counter"></span><br>
+        Total Item Get: <span id="counteritemget"></span><br>
+        Total Duplicated Get: <span id="counterduplicateget"></span>
+    </p>
+    <p><strong>Indicator:</strong><br>
+        <span style="background-color: White; color: White;">__</span> White Background,<span
+            style="background-color: black; color: black;">__</span> Black Text = 1.75% items <br>
+        <span style="background-color: gray; color: gray;">__</span> Gray Background,<span
+            style="background-color: black; color: black;">__</span> Black Text = 0.75% items and 0.70% items <br>
+        <span style="background-color: blue; color: blue;">__</span> Blue Background,<span
+            style="background-color: black; color: black;">__</span> Black Text = 0.60% items <br>
+        <span style="background-color: green; color: green;">__</span> Green Background,<span
+            style="background-color: black; color: black;">__</span> Black Text = 0.50% items and 0.55% items <br>
+        <span style="background-color: Purple; color: Purple;">__</span> Purple Background,<span
+            style="background-color: black; color: black;">__</span> Black Text = 0.40% items and 0.45% items <br>
+        <span style="background-color: gold; color: gold;">__</span> Yelow Background,<span
+            style="background-color: black; color: black;">__</span> Black Text = 0.35% items <br>
+        <span style="background-color: Crimson; color: Crimson;">__</span> Crimson Background,<span
+            style="background-color: black; color: black;">__</span> Black Text = 0.30% items <br>
         <br>
-        White Background, Red Text = Duplicate Item
+        <span style="background-color: White; color: White;">__</span> White Background,<span
+            style="background-color: red; color: red;">__</span> Red Text = Duplicate Item
+    </p>
+    <br><br>
+    <p><strong>Logger: </strong></p>
+    <p id="logger" style="background-color: black; color: rgb(49, 255, 49);">
+
     </p>
 
 
@@ -157,6 +195,8 @@
 
         // counter to count the number of crate opened
         var crateCounter = 0;
+        var counteritemget = 0;
+        var counterduplicateget = 0;
 
         // display the item and its drop rate
         var listitem = document.getElementById("listitem");
@@ -168,7 +208,13 @@
         // get itemsArray length
         var itemsArrayLength = itemsArray.length;
 
+        //get logger id
+        var logger = document.getElementById("logger");
+        var str = "";
+
         console.log("Total Items: " + itemsArrayLength);
+        str = str + "Total Items: " + itemsArrayLength + "<br>";
+        logger.innerHTML = str;
 
         // create a row for each item
         resListItem();
@@ -177,13 +223,19 @@
         var randomopen = document.getElementById("randomlyopen");
         randomopen.onclick = function () {
             console.log("Using Randomly Open Crate Using Random Number 1 times!");
+            str = str + "Using Randomly Open Crate Using Random Number 1 times!" + "<br>";
+            logger.innerHTML = str;
             var random = Math.random();
             var total = 0;
             for (var i = 0; i < itemsArrayLength; i++) {
                 total += itemsArray[i][1];
                 console.log("curr total:" + total);
+                str = str + "curr total:" + total + "<br>";
+                logger.innerHTML = str;
                 if (random < total) {
                     console.log("Random Number: " + random);
+                    str = str + "Random Number: " + random + "<br>";
+                    logger.innerHTML = str;
                     // check if the item has been dropped before
                     if (droppedItems.indexOf(itemsArray[i][0]) == -1) {
                         // add the item to the array of dropped items
@@ -220,6 +272,7 @@
                         item.appendChild(document.createTextNode(" ; "));
 
                         listitem.appendChild(item);
+                        counteritemget++;
 
                         crateCounter++;
                         disp();
@@ -239,6 +292,7 @@
                         listitem.appendChild(item);
 
                         crateCounter++;
+                        counterduplicateget++;
                         disp();
                         break;
                     }
@@ -254,11 +308,15 @@
         var randomopen10 = document.getElementById("randomlyopen10");
         randomopen10.onclick = function () {
             console.log("Using Randomly Open Crate Using Random Number 10 times!");
+            str = str + "Using Randomly Open Crate Using Random Number 10 times!" + "<br>";
+            logger.innerHTML = str;
             var max = 10;
             var getitem = [];
             for (var l = 0; l < max; l++) {
                 var random = Math.random();
                 console.log("Random Number: " + random);
+                str = str + "Random Number: " + random + "<br>";
+                logger.innerHTML = str;
                 var total = 0;
                 for (var i = 0; i < itemsArrayLength; i++) {
                     total += itemsArray[i][1];
@@ -301,6 +359,7 @@
                             listitem.appendChild(item);
 
                             crateCounter++;
+                            counteritemget++;
                         } else {
                             // if the item has been dropped before, put it as bp
                             var item = document.createElement("span");
@@ -314,6 +373,7 @@
                             listitem.appendChild(item);
 
                             crateCounter++;
+                            counterduplicateget++;
                         }
                         break;
                     }
@@ -327,8 +387,12 @@
         var randomopendice = document.getElementById("randomlyopendice");
         randomopendice.onclick = function () {
             console.log("Using Randomly Open Crate Using Dice Algorithms 1 times!");
+            str = str + "Using Randomly Open Crate Using Dice Algorithms 1 times!" + "<br>";
+            logger.innerHTML = str;
             var getRandomNumber = diceRoll(0, itemsArrayLength - 1);
             console.log("Dice Rolled: " + getRandomNumber);
+            str = str + "Dice Rolled: " + getRandomNumber + "<br>";
+            logger.innerHTML = str;
             // check if the item has been dropped before
             if (droppedItems.indexOf(itemsArray[getRandomNumber][0]) == -1) {
                 // add the item to the array of dropped items
@@ -367,6 +431,7 @@
                 listitem.appendChild(item);
 
                 crateCounter++;
+                counteritemget++;
                 disp();
             } else {
                 // if the item has been dropped before, put it as bp
@@ -383,6 +448,7 @@
                 listitem.appendChild(item);
 
                 crateCounter++;
+                counterduplicateget++;
                 disp();
             }
         };
@@ -391,10 +457,14 @@
         var randomopencide10 = document.getElementById("randomlyopencide10");
         randomopencide10.onclick = function () {
             console.log("Using Randomly Open Crate Using Dice Algorithms 10 times!");
+            str = str + "Using Randomly Open Crate Using Dice Algorithms 10 times!" + "<br>";
+            logger.innerHTML = str;
             var max = 10;
             for (var i = 0; i < max; i++) {
                 var getRandomNumber = diceRoll(0, itemsArrayLength - 1);
                 console.log("Dice Rolled: " + getRandomNumber);
+                str = str + "Dice Rolled: " + getRandomNumber + "<br>";
+                logger.innerHTML = str;
                 // check if the item has been dropped before
                 if (droppedItems.indexOf(itemsArray[getRandomNumber][0]) == -1) {
                     // add the item to the array of dropped items
@@ -433,6 +503,7 @@
                     listitem.appendChild(item);
 
                     crateCounter++;
+                    counteritemget++;
                     disp();
                 } else {
                     // if the item has been dropped before, put it as bp
@@ -449,6 +520,7 @@
                     listitem.appendChild(item);
 
                     crateCounter++;
+                    counterduplicateget++;
                     disp();
                 }
             }
@@ -460,6 +532,9 @@
         reset.onclick = function () {
             droppedItems = [];
             crateCounter = 0;
+            counteritemget = 0;
+            counterduplicateget = 0;
+            logger.innerHTML = "";
             resListItem();
             disp();
         };
@@ -467,6 +542,8 @@
         // display crateCounter into counter
         function disp() {
             document.getElementById("counter").innerHTML = crateCounter;
+            document.getElementById("counterduplicateget").innerHTML = counterduplicateget;
+            document.getElementById("counteritemget").innerHTML = counteritemget;
         }
 
         function resListItem() {
