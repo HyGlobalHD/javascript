@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button id="generate">Generate</button>
+    <button id="reset">Reset</button>
+    <button id="download">Download</button>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // generate random number that look like a human face and draw it on the canvas when the button is clicked
+        document.getElementById('generate').addEventListener('click', function() {
+            var canvas = document.getElementById('canvas');
+            var ctx = canvas.getContext('2d');
+
+            // get user input on how big the canvas should be
+            var width = parseInt(prompt('Enter the width of the canvas'));
+            var height = parseInt(prompt('Enter the height of the canvas'));
+
+            // set the canvas width and height to the window width and height
+            canvas.width = width;
+            canvas.height = height;
+
+            // get user input on how many circles to draw
+            var numCircles = prompt('How many circles would you like to draw?');
+            
+
+            var width = canvas.width;
+            var height = canvas.height;
+
+            for(var i = 0; i < numCircles; i++) {
+                // generate random x and y coordinates
+                var x = Math.random() * width;
+                var y = Math.random() * height;
+
+                // generate random radius
+                var radius = Math.random() * 50;
+
+                // generate random color
+                var red = Math.random() * 255;
+                var green = Math.random() * 255;
+                var blue = Math.random() * 255;
+
+                // draw the circle
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+                ctx.fillStyle = 'rgba(' + red + ', ' + green + ', ' + blue + ', 0.5)';
+                ctx.fill();
+            }/*
+            var x = Math.floor(Math.random() * width);
+            var y = Math.floor(Math.random() * height);
+            var radius = Math.floor(Math.random() * height / 2);
+            var color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill(); */
+        });
+
+        // reset the canvas when the button is clicked
+        document.getElementById('reset').addEventListener('click', function() {
+            var canvas = document.getElementById('canvas');
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // download the canvas when the button is clicked
+        document.getElementById('download').addEventListener('click', function() {
+            var canvas = document.getElementById('canvas');
+            var link = document.createElement('a');
+            link.download = 'random.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+
+</html>
