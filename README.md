@@ -11,4 +11,4 @@ Terrain gen note: the larger the size, the more lag it is.
 - [randomcolourgen.html](https://hyglobalhd.github.io/javascript/randomcolourgen.html)*
 - [simpleMovementCanvas.html](https://hyglobalhd.github.io/javascript/simpleMovementCanvas.html)
 - [terraingen0.html](https://hyglobalhd.github.io/javascript/terraingen0.html)
-- 
+- [randomcolourcirclegen.html](https://hyglobalhd.github.io/javascript/randomcolourcirclegen.html)
