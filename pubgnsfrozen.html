@@ -14,10 +14,13 @@
     <div id="listitem"></div>
 
     <p>Use the button below: </p>
-    <button id="randomlyopen">Randomly Open</button>
-    <button id="randomlyopen10">Randomly Open 10</button>
+    <button id="randomlyopen">Randomly Open Using Random Number</button>
+    <button id="randomlyopen10">Randomly Open 10 Using Random Number</button>
+    <br><br>
+    <button id="randomlyopendice">Randomly Open Using Dice Algorithm</button>
+    <button id="randomlyopencide10">Randomly Open 10 Using Dice Algorithm</button>
     <p>Total Crates Used: <span id="counter"></span></p>
-    <p>Indicator: 
+    <p>Indicator:
         White Background, Black Text = 1.75% items <br>
         Gray Background, Black Text = 0.75% items and 0.70% items <br>
         Blue Background, Black Text = 0.60% items <br>
@@ -34,93 +37,19 @@
     <script>
         // Simulation for Frozen Wonderland Crate Drop Rates in PUBG New State
 
-        // list of items and its drop rates
-        // Hi-top Trainers 1.75%
-        // Hi-top Trainers (Blue) 1.75%
-        // Locos Home Uniform 1.75%
-        // Locos Shoes 1.75%
-        // Locos Away Pants 1.75%
-        // Locos Away Jersey 1.75%
-        // Hexadeathimal Sunglasses 1.75%
-        // Locos Hat 1.75%
-        // Lions Home Uniform 1.75%
-        // Lions Shoes 1.75%
-        // Lions Away Pants 1.75%
-        // Lions Away Jersey 1.75%
-        // Lions Hat 1.75%
-        // Tinted Biker Shades 1.75%
-        // Balaclava (Black) 1.75%
-        // Roar Streetwear Slip-ons 1.75%
-        // Vintage Aviator Googles 1.75%
-        // Roar Streetwear Respirator 1.75%
-        // Worn Leather Shoes (Black) 1.75%
-        // Rich Boy T-shirt 1.75%
-        // Timekeeper Sunglasses 1.75%
-        // Tourist Trap Boots 1.75%
-        // Black Tank Top 1.75%
-        // Pillar Tactical Mask 1.75%
-        // Traditional Glasses (Round) 1.75%
-        // Constable's Pants 1.75%
-        // Constable's Gloves 1.75%
-        // Constable's Coat 1.75%
-        // Constable's Hat 1.75%
-        // Paradise Leather Sneakers (Black) 1.75%
-        // Street Art Leggings 1.75%
-        // Avatar Sunglasses (Brass) 1.75%
-        // Paradise Leather Cap (Black) 1.75%
-        // Julie's Black Mystic Boots 1.75%
-        // Julie's Black Mystic Gloves 1.75%
-        // Julie's Black Mystic Uniform 1.75%
-        // Julie's Black Mystic Mask 1.75%
-        // Julie's Black Mystic Googles 1.75%
-        // Street Beat Shoes 1.75%
-        // Street Beat Pants 1.75%
-        // Street Beat Jacket 1.75%
-        // Street Beat Gloves 1.75%
-        // Street Beat Mask 1.75%
-        // Ringside Shoes 0.75%
-        // Ringside Cargo Trunks 0.75%
-        // Ringside Scratch Hoodie 0.75%
-        // Black Beanie and Headphones 0.75%
-        // Aviator Sunglasses 0.70%
-        // Rose-tinted Glasses 0.70%
-        // Schwizard's Moonglow Slippers 0.60%
-        // Schwizard's Shleepy Pants (Rose Pink) 0.60%
-        // Schwizard's Robes (Pale Blue) 0.60%
-        // Schwizard's Hypno-eye Glasses 0.60%
-        // Schwizard's Hat (Green) 0.60%
-        // Artic Digital - SKS 0.60%
-        // Artic Digital - AUG 0.60%
-        // Artic Digital - AWM 0.60%
-        // Artic Digital - M16A4 0.60%
-        // Artic Digital - P92 0.60%
-        // Snow Gun - Skorpion 0.60%
-        // Snow Maiden Gloves 0.60%
-        // Snow Maiden Backpack Lv.1 0.60%
-        // Heavy Fur Coat (Black) 0.55%
-        // Kubanka (Black) 0.55%
-        // Heavy Fur Coat (Red) 0.55%
-        // Kubanka (Red) 0.55%
-        // Heavy Fur Coat (Gold) 0.55%
-        // Kubanka (Gold) 0.55%
-        // Artic Fairy Boots 0.55%
-        // Artic Fairy Costume 0.55%
-        // Artic Fairy Hat 0.55%
-        // Snow Gun - P90 0.55%
-        // Snow Maiden Backpack Lv.2 0.55%
-        // Snow Barrier - Deployable Shield (Wide) 0.50%
-        // Snow Maiden Boots 0.50%
-        // Snow Maiden Helmet Lv.1 0.50%
-        // Snow Gun - SLR 0.45%
-        // Snow Maiden Backpack Lv.3 0.45%
-        // Snow Maiden Helmet Lv.3 0.45%
-        // Snow Maiden Helmet Lv.2 0.45%
-        // Snow Maiden Costume 0.40%
-        // Crystal Queen Tiara 0.40%
-        // Snow Maiden Hat 0.35%
-        // Crytsal Fire - Beryl M762 0.30%
-
         // put the list of items and its drop rates in an object
+        // 0.0175 = 43 items = 0.7525
+        // 0.0075 = 4 items = 0.03
+        // 0.0070 = 2 items = 0.014
+        // 0.0060 = 13 items = 0.078
+        // 0.0055 = 11 items = 0.0605
+        // 0.0050 = 3 items = 0.015
+        // 0.0045 = 4 items = 0.018
+        // 0.0040 = 2 items = 0.008
+        // 0.0035 = 1 items = 0.0035
+        // 0.0030 = 1 items = 0.0030
+        // all total item is 84 items
+
         var items = {
             "Hi-top Trainers": 0.0175,
             "Hi-top Trainers (Blue)": 0.0175,
@@ -208,10 +137,16 @@
             "Crytsal Fire - Beryl M762": 0.0030
         };
 
+
         // put the list of items and its drop rates in an array
         var itemsArray = Object.keys(items).map(function (key) {
             return [key, items[key]];
         });
+
+        // function to dice roll
+        function diceRoll(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
 
         // an array for the items that have been dropped
         var droppedItems = [];
@@ -229,6 +164,8 @@
         // get itemsArray length
         var itemsArrayLength = itemsArray.length;
 
+        console.log("Total Items: " + itemsArrayLength);
+
         // create a row for each item
         for (var i = 0; i < itemsArrayLength; i++) {
             console.log(itemsArray[i]);
@@ -244,16 +181,24 @@
             }
             tablebody.appendChild(row);
         }
+        var nl = document.createElement("br");
         table.appendChild(tablebody);
         listitem.appendChild(table);
+        listitem.appendChild(nl);
+        listitem.appendChild(document.createTextNode(" Below Are The Items And Their Drop Rates, that You opened."));
+        listitem.appendChild(nl);
+        listitem.appendChild(document.createTextNode(" "));
+        listitem.appendChild(nl);
 
         // when click randomlyopen button, randomly open an item based on its drop rate
         var randomopen = document.getElementById("randomlyopen");
         randomopen.onclick = function () {
             var random = Math.random();
+            console.log("rand: " + random);
             var total = 0;
             for (var i = 0; i < itemsArrayLength; i++) {
                 total += itemsArray[i][1];
+                console.log("curr total:" + total);
                 if (random < total) {
 
                     // check if the item has been dropped before
@@ -269,19 +214,19 @@
                         if (itemsArray[i][1] == 0.003) {
                             // set the item background color to crimson
                             item.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0035) {
+                        } else if (itemsArray[i][1] == 0.0035) {
                             // set the item background colour to yellow
                             item.style.backgroundColor = "rgba(255, 255, 0, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0040 || itemsArray[i][1] == 0.0045) {
+                        } else if (itemsArray[i][1] == 0.0040 || itemsArray[i][1] == 0.0045) {
                             // set the item background colour to purple
                             item.style.backgroundColor = "rgba(255, 0, 255, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0055 || itemsArray[i][1] == 0.0050) {
+                        } else if (itemsArray[i][1] == 0.0055 || itemsArray[i][1] == 0.0050) {
                             // set the item background colour to green
                             item.style.backgroundColor = "rgba(0, 255, 0, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0060) {
+                        } else if (itemsArray[i][1] == 0.0060) {
                             // set the item background colour to blue
                             item.style.backgroundColor = "rgba(0, 0, 255, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0075 || itemsArray[i][1] == 0.0070) {
+                        } else if (itemsArray[i][1] == 0.0075 || itemsArray[i][1] == 0.0070) {
                             // set the item background colour to grey
                             item.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
                         }
@@ -290,11 +235,11 @@
                         item.appendChild(document.createTextNode(itemsArray[i][0]));
                         item.appendChild(document.createTextNode(" - " + itemsArray[i][1]));
                         item.appendChild(document.createTextNode(" ; "));
-                        
+
                         listitem.appendChild(item);
 
                         crateCounter++;
-                            disp();
+                        disp();
                         break;
                     } else {
                         // if the item has been dropped before, put it as bp
@@ -309,9 +254,9 @@
                         item.appendChild(document.createTextNode(" - " + itemsArray[i][1] + " (BP)"));
                         item.appendChild(document.createTextNode(" ; "));
                         listitem.appendChild(item);
-                        
+
                         crateCounter++;
-                            disp();
+                        disp();
                         break;
                     }
 
@@ -321,7 +266,7 @@
                 }
             }
         };
-        
+
         // when click randomlyopen10 button, randomly open 10 item based on its drop rate
         var randomopen10 = document.getElementById("randomlyopen10");
         randomopen10.onclick = function () {
@@ -333,6 +278,9 @@
                 total += itemsArray[i][1];
                 if (random < total) {
 
+                    var random = Math.random();
+                    console.log("change state: " + random);
+
                     // check if the item has been dropped before
                     if (droppedItems.indexOf(itemsArray[i][0]) == -1) {
                         // add the item to the array of dropped items
@@ -341,24 +289,24 @@
                         var item = document.createElement("span");
                         // set the item background color
                         //item.style.backgroundColor = "rgba(60, 255, 255, 0.5)";
-                        
+
                         // if the item drop rate is less than 0.003, set the item background color to yellow
                         if (itemsArray[i][1] == 0.003) {
                             // set the item background color to crimson
                             item.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0035) {
+                        } else if (itemsArray[i][1] == 0.0035) {
                             // set the item background colour to yellow
                             item.style.backgroundColor = "rgba(255, 255, 0, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0040 || itemsArray[i][1] == 0.0045) {
+                        } else if (itemsArray[i][1] == 0.0040 || itemsArray[i][1] == 0.0045) {
                             // set the item background colour to purple
                             item.style.backgroundColor = "rgba(255, 0, 255, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0055 || itemsArray[i][1] == 0.0050) {
+                        } else if (itemsArray[i][1] == 0.0055 || itemsArray[i][1] == 0.0050) {
                             // set the item background colour to green
                             item.style.backgroundColor = "rgba(0, 255, 0, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0060) {
+                        } else if (itemsArray[i][1] == 0.0060) {
                             // set the item background colour to blue
                             item.style.backgroundColor = "rgba(0, 0, 255, 0.5)";
-                        } else if(itemsArray[i][1] == 0.0075 || itemsArray[i][1] == 0.0070) {
+                        } else if (itemsArray[i][1] == 0.0075 || itemsArray[i][1] == 0.0070) {
                             // set the item background colour to grey
                             item.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
                         }
@@ -369,7 +317,7 @@
                         item.appendChild(document.createTextNode(" ; "));
                         listitem.appendChild(item);
                         max--;
-                        
+
                         crateCounter++;
                         if (max == 0) {
                             disp();
@@ -387,7 +335,7 @@
                         item.appendChild(document.createTextNode(" ; "));
                         listitem.appendChild(item);
                         max--;
-                        
+
                         crateCounter++;
                         if (max == 0) {
                             disp();
@@ -399,6 +347,135 @@
             }
         };
 
+        // randomlyopendice button
+        var randomopendice = document.getElementById("randomlyopendice");
+        randomopendice.onclick = function () {
+            var getRandomNumber = diceRoll(0, itemsArrayLength - 1);
+            console.log(getRandomNumber);
+            // check if the item has been dropped before
+            if (droppedItems.indexOf(itemsArray[getRandomNumber][0]) == -1) {
+                // add the item to the array of dropped items
+                droppedItems.push(itemsArray[getRandomNumber][0]);
+                // display the item
+                var item = document.createElement("span");
+                // set the item background color
+                //item.style.backgroundColor = "rgba(60, 255, 255, 0.5)";
+
+                // if the item drop rate is less than 0.003, set the item background color to yellow
+                if (itemsArray[getRandomNumber][1] == 0.003) {
+                    // set the item background color to crimson
+                    item.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
+                } else if (itemsArray[getRandomNumber][1] == 0.0035) {
+                    // set the item background colour to yellow
+                    item.style.backgroundColor = "rgba(255, 255, 0, 0.5)";
+                } else if (itemsArray[getRandomNumber][1] == 0.0040 || itemsArray[getRandomNumber][1] == 0.0045) {
+                    // set the item background colour to purple
+                    item.style.backgroundColor = "rgba(255, 0, 255, 0.5)";
+                } else if (itemsArray[getRandomNumber][1] == 0.0055 || itemsArray[getRandomNumber][1] == 0.0050) {
+                    // set the item background colour to green
+                    item.style.backgroundColor = "rgba(0, 255, 0, 0.5)";
+                } else if (itemsArray[getRandomNumber][1] == 0.0060) {
+                    // set the item background colour to blue
+                    item.style.backgroundColor = "rgba(0, 0, 255, 0.5)";
+                } else if (itemsArray[getRandomNumber][1] == 0.0075 || itemsArray[getRandomNumber][1] == 0.0070) {
+                    // set the item background colour to grey
+                    item.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
+                }
+
+                // make a delimiter between the item and its drop rate
+                item.appendChild(document.createTextNode(itemsArray[getRandomNumber][0]));
+                item.appendChild(document.createTextNode(" - " + itemsArray[getRandomNumber][1]));
+                item.appendChild(document.createTextNode(" ; "));
+
+                listitem.appendChild(item);
+
+                crateCounter++;
+                disp();
+            } else {
+                // if the item has been dropped before, put it as bp
+
+                var item = document.createElement("span");
+
+                // set the item background colour to white
+                item.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
+                // set the item text colour to red
+                item.style.color = "rgba(255, 0, 0, 0.5)";
+                item.appendChild(document.createTextNode(itemsArray[getRandomNumber][0]));
+                item.appendChild(document.createTextNode(" - " + itemsArray[getRandomNumber][1] + " (BP)"));
+                item.appendChild(document.createTextNode(" ; "));
+                listitem.appendChild(item);
+
+                crateCounter++;
+                disp();
+            }
+        };
+
+        // randomlyopencide10 button
+        var randomopencide10 = document.getElementById("randomlyopencide10");
+        randomopencide10.onclick = function () {
+            var max = 10;
+            for (var i = 0; i < max; i++) {
+                var getRandomNumber = diceRoll(0, itemsArrayLength - 1);
+                console.log(getRandomNumber);
+                // check if the item has been dropped before
+                if (droppedItems.indexOf(itemsArray[getRandomNumber][0]) == -1) {
+                    // add the item to the array of dropped items
+                    droppedItems.push(itemsArray[getRandomNumber][0]);
+                    // display the item
+                    var item = document.createElement("span");
+                    // set the item background color
+                    //item.style.backgroundColor = "rgba(60, 255, 255, 0.5)";
+
+                    // if the item drop rate is less than 0.003, set the item background color to yellow
+                    if (itemsArray[getRandomNumber][1] == 0.003) {
+                        // set the item background color to crimson
+                        item.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
+                    } else if (itemsArray[getRandomNumber][1] == 0.0035) {
+                        // set the item background colour to yellow
+                        item.style.backgroundColor = "rgba(255, 255, 0, 0.5)";
+                    } else if (itemsArray[getRandomNumber][1] == 0.0040 || itemsArray[getRandomNumber][1] == 0.0045) {
+                        // set the item background colour to purple
+                        item.style.backgroundColor = "rgba(255, 0, 255, 0.5)";
+                    } else if (itemsArray[getRandomNumber][1] == 0.0055 || itemsArray[getRandomNumber][1] == 0.0050) {
+                        // set the item background colour to green
+                        item.style.backgroundColor = "rgba(0, 255, 0, 0.5)";
+                    } else if (itemsArray[getRandomNumber][1] == 0.0060) {
+                        // set the item background colour to blue
+                        item.style.backgroundColor = "rgba(0, 0, 255, 0.5)";
+                    } else if (itemsArray[getRandomNumber][1] == 0.0075 || itemsArray[getRandomNumber][1] == 0.0070) {
+                        // set the item background colour to grey
+                        item.style.backgroundColor = "rgba(128, 128, 128, 0.5)";
+                    }
+
+                    // make a delimiter between the item and its drop rate
+                    item.appendChild(document.createTextNode(itemsArray[getRandomNumber][0]));
+                    item.appendChild(document.createTextNode(" - " + itemsArray[getRandomNumber][1]));
+                    item.appendChild(document.createTextNode(" ; "));
+
+                    listitem.appendChild(item);
+
+                    crateCounter++;
+                    disp();
+                } else {
+                    // if the item has been dropped before, put it as bp
+
+                    var item = document.createElement("span");
+
+                    // set the item background colour to white
+                    item.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
+                    // set the item text colour to red
+                    item.style.color = "rgba(255, 0, 0, 0.5)";
+                    item.appendChild(document.createTextNode(itemsArray[getRandomNumber][0]));
+                    item.appendChild(document.createTextNode(" - " + itemsArray[getRandomNumber][1] + " (BP)"));
+                    item.appendChild(document.createTextNode(" ; "));
+                    listitem.appendChild(item);
+
+                    crateCounter++;
+                    disp();
+                }
+            }
+
+        };
         // display crateCounter into counter
         function disp() {
             document.getElementById("counter").innerHTML = crateCounter;
