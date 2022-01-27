@@ -5,18 +5,23 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Random Circle Generate</title>
 </head>
 
 <body>
     <button id="generate">Generate</button>
     <button id="reset">Reset</button>
     <button id="download">Download</button>
-    <canvas id="canvas"></canvas>
+    <br>
+    <br>
+    <div id="log"></div>
+    <br>
+    <canvas id="canvas" width="0" height="0"></canvas>
+
 
     <script>
         // generate random number that look like a human face and draw it on the canvas when the button is clicked
-        document.getElementById('generate').addEventListener('click', function() {
+        document.getElementById('generate').addEventListener('click', function () {
             var canvas = document.getElementById('canvas');
             var ctx = canvas.getContext('2d');
 
@@ -30,12 +35,12 @@
 
             // get user input on how many circles to draw
             var numCircles = prompt('How many circles would you like to draw?');
-            
+
 
             var width = canvas.width;
             var height = canvas.height;
 
-            for(var i = 0; i < numCircles; i++) {
+            for (var i = 0; i < numCircles; i++) {
                 // generate random x and y coordinates
                 var x = Math.random() * width;
                 var y = Math.random() * height;
@@ -65,20 +70,52 @@
         });
 
         // reset the canvas when the button is clicked
-        document.getElementById('reset').addEventListener('click', function() {
+        document.getElementById('reset').addEventListener('click', function () {
             var canvas = document.getElementById('canvas');
             var ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = 0;
+            canvas.height = 0;
+            var log = document.getElementById('log');
+            log.innerHTML = "";
         });
 
-        // download the canvas when the button is clicked
-        document.getElementById('download').addEventListener('click', function() {
+        // download the canvas when the button is clicked and save it as svg format
+        /*document.getElementById('download').addEventListener('click', function () {
             var canvas = document.getElementById('canvas');
             var link = document.createElement('a');
-            link.download = 'random.png';
-            link.href = canvas.toDataURL();
+            link.download = 'randomcircle.svg';
+            link.href = canvas.toDataURL('image/svg+xml');
             link.click();
+            var link2 = document.createElement('a');
+            link2.download = 'randomcircle.png';
+            link2.href = canvas.toDataURL('image/png');
+            link2.click();
+        });*/
+
+
+        document.getElementById('download').addEventListener('click', function () {
+            var canvas = document.getElementById('canvas');
+            //check if canvas size is not defined
+            if (canvas.width == 0 || canvas.height == 0) {
+                alert("Canvas size is not defined");
+                return;
+            } else {
+                var canvas = document.getElementById('canvas');
+                var link = document.createElement('a');
+                link.download = 'random.png';
+                link.href = canvas.toDataURL();
+                link.click();
+
+                var log = document.getElementById('log');
+                log.innerHTML = "";
+                var img = document.createElement('p');
+                log.appendChild(document.createTextNode("Successfully downloaded"));
+            }
+
+
         });
+
     </script>
 </body>
 
