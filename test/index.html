@@ -20,22 +20,19 @@
 </body>
 </html>
 -->
+<script>
+    var image_file = 'test.jpg';
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <script>
-        var image_file = 'test.jpg';
+    // Load the image
+    var img = new Image();
+    img.src = image_file;
+    
+    document.write(img.outerHTML);
 
-        // redirect to the image
-        window.location.href = image_file;
+    // remove script tag
+    document.getElementsByTagName('script')[0].remove();
+    // remove head tag
+    document.getElementsByTagName('head')[0].remove();
 
-    </script>
-</body>
-</html>
+
+</script>
