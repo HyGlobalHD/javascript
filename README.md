@@ -13,3 +13,4 @@ Terrain gen note: the larger the size, the more lag it is.
 - [terraingen0.html](https://hyglobalhd.github.io/javascript/terraingen0.html) : same like testSimulatorAI, except that user can't control the input
 - [randomcolourcirclegen.html](https://hyglobalhd.github.io/javascript/randomcolourcirclegen.html) : same as randomcolourgen.html, except it is circle, and user can control the canvas size
 - [pubgnsfrozen.html](https://hyglobalhd.github.io/javascript/pubgnsfrozen.html) : to simulate PUBG New State Crates Opening For Frozen Beryl M762 Events
+- [drtl](https://hyglobalhd.github.io/javascript/drtl/) : idk
