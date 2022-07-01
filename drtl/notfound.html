@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Found</title>
+</head>
+<body>
+    <p>Opps something wrong.</p>
+    <div id="link"></div>
+    <script>
+        // display all the redirect link
+        
+        const url = 'data.json';
+        const main = 'index.html?l=';
+
+        fetch(url)
+        .then((response) => {
+                return response.json();
+        })
+        .then((data) => {
+            let cc = data;
+            var l = document.getElementById("link");
+            for(var i = 0; i < cc.length; i++) {
+                l.innerHTML = l.innerHTML + "<p><a href='" + main + cc[i].code + "' style='color:blue'>" + cc[i].url  + "</a></p>";
+            }
+
+        });
+    </script>
+    <script>
+        const elem = document.getElementsByTagName("script");
+        for (var i = 0; i < elem.length; i++) {
+            elem[i].remove();
+        }
+    </script>
+</body>
+</html>
