@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NO</title>
+</head>
+
+<body>
+    <div id="countdown">
+
+    </div>
+    <script id="test">
+        var urlSearch = new URLSearchParams(window.location.search);
+        let query = urlSearch.get('l');
+        const url = 'data.json';
+
+        var results = "";
+
+        //console.log(query);
+        if (query == '' || query == null) {
+            query == '';
+        }
+
+        fetch(url)
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                let cc = data;
+
+                //console.log(cc);
+                //console.log(cc.length);
+
+                var ccd = document.getElementById("countdown");
+
+                for (var i = 0; i < cc.length; i++) {
+                    if (cc[i].code == query) {
+                        //console.log('found');
+                        results = cc[i].url;
+                        //console.log(results);
+                        if (results == "" || results == null) {
+                            //console.log('test');
+                        } else {
+                            //console.log('test');
+                            var x = 6;
+                            const timer = setInterval(function () {
+                                x--;
+                                //console.log(x);
+                                ccd.innerText = x;
+                                if (x === 0) {
+                                    clearInterval(timer);
+                                    //window.location.replace(results);
+                                }
+                            }, 1000);
+                        }
+                        break;
+                    }
+                }
+                //console.log(results);
+                if (results == "" || results == null) {
+                    //window.location.replace("notfound.html");
+                    alert('Oppss something wrong');
+                }
+
+            });
+
+    </script>
+
+    <script>
+        const elem = document.getElementsByTagName("script");
+        for (var i = 0; i < elem.length; i++) {
+            elem[i].remove();
+        }
+    </script>
+</body>
+
+</html>
