@@ -6,6 +6,7 @@ Terrain gen note: the larger the size, the more lag it is.
 
 - [testSimulatorAI](https://hyglobalhd.github.io/javascript/testSimulatorAI.html) : to generate random terrain
 - [gopluscalc](https://hyglobalhd.github.io/javascript/gopluscalc.html) : to calculate Touch N Go Go+ Rates
+- [new goplus cal](https://hyglobalhd.github.io/javascript/newGoPlusCalc.html) : newer version for gopluscalc
 - [canvasrandomcolourblending.html](https://hyglobalhd.github.io/javascript/canvasrandomcolourblending.html) : to Generate large random colour in canvas, and allow download
 - [randomEntityMovement0.html](https://hyglobalhd.github.io/javascript/randomEntityMovement0.html) : using random algorithms to see to different 'entity' moves and their far
 - [randomcolourgen.html](https://hyglobalhd.github.io/javascript/randomcolourgen.html) : allow user input in how they want random colour to generate (blocky), and can download the latest only generated colour (have to convert to canvas first)
