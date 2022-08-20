@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>TnG Go+ Calculator</title>
+</head>
+
+<body>
+
+    <h1>This is just a basic calculation for Touch N Go Go+ returns</h1>
+    <p>For my own usages.</p>
+    <p>note: for P.A% as it would change(idk when), the calculation would be incorrect</p>
+    <p></p>
+
+    <table>
+        <h1>Savings</h1>
+        <tr>
+            <td>Current total Savings: </td>
+            <td><input id="ctsavings" type="number" value="0"></td>
+        </tr>
+        <tr>
+            <td>Current P.A% : </td>
+            <td><input id="cpa" type="number" value="0">%</td>
+            <td>p.s still looking if I can fetch the P.A% data from the Go+</td>
+        </tr>
+    </table>
+
+    <table>
+        <h1>Input</h1>
+        <p>note: only put data where you want to look for</p>
+        <tr>
+            <td>Calculation for how many days: </td>
+            <td><input id="idays" type="number" value="0"></td>
+        </tr>
+        <tr>
+            <td>Calculation for how many months: </td>
+            <td><input id="imonths" type="number" value="0"></td>
+        </tr>
+        <tr>
+            <td>Calculation for how many years: </td>
+            <td><input id="iyears" type="number" value="0"></td>
+        </tr>
+    </table>
+
+    <table>
+        <h1>Output</h1>
+        <p>note: month use per 30days, and years for 365days</p>
+        <tr>
+            <td>Savings after <span id="oidays">x</span> days:</td>
+            <td><input id="odsavings" type="number" readonly></td>
+            <td> - without plus of savings: </td>
+            <td><input id="odsavings2" type="number" readonly></td>
+        </tr>
+        <tr>
+            <td>Savings after <span id="oimonths">x</span> months:</td>
+            <td><input id="omsavings" type="number" readonly></td>
+            <td> - without plus of savings: </td>
+            <td><input id="omsavings2" type="number" readonly></td>
+        </tr>
+        <tr>
+            <td>Savings after <span id="oyears">x</span> years:</td>
+            <td><input id="oysavings" type="number" readonly></td>
+            <td> - without plus of savings: </td>
+            <td><input id="oysavings2" type="number" readonly></td>
+        </tr>
+    </table>
+
+
+    <script>
+
+        function getCSavings() {
+            return parseFloat(document.getElementById("ctsavings").value);
+        }
+
+        function getCPA() {
+            return parseFloat(document.getElementById("cpa").value);
+        }
+
+        function getIDays() {
+            return parseFloat(document.getElementById("idays").value);
+        }
+        function getIMonths() {
+            return parseFloat(document.getElementById("imonths").value);
+        }
+        function getIYears() {
+            return parseFloat(document.getElementById("iyears").value);
+        }
+
+        function calcReturnsPD(totalSaving, pa) {
+            return ((totalSaving * (pa / 100)) / 365);
+        }
+
+        function calcDays(savings, pa, days) {
+            for(var i = 0; i < days; i++) {
+                savings += calcReturnsPD(savings, pa);
+            }
+            return savings;
+        }
+
+        function odays() {
+            var ctsavings = getCSavings();
+            var cpa = getCPA();
+            var idays = getIDays();
+
+            var odays = document.getElementById("oidays");
+            var calc = calcDays(ctsavings, cpa, idays);
+            odays.innerHTML = idays;
+            document.getElementById("odsavings").value = calc;
+
+            document.getElementById("odsavings2").value = calc - ctsavings;
+
+        }
+
+        function omonths() {
+            var ctsavings = getCSavings();
+            var cpa = getCPA();
+            var imonths = getIMonths();
+
+            var omonths = document.getElementById("oimonths");
+            var calc = calcDays(ctsavings, cpa, imonths * 30);
+            omonths.innerHTML = imonths;
+            document.getElementById("omsavings").value = calc;
+
+            document.getElementById("omsavings2").value = calc - ctsavings;
+        }
+
+        function oyears() {
+            var ctsavings = getCSavings();
+            var cpa = getCPA();
+            var iyears = getIYears();
+
+            var oyears = document.getElementById("oyears");
+            var calc = calcDays(ctsavings, cpa, iyears * 365);
+            oyears.innerHTML = iyears;
+            document.getElementById("oysavings").value = calc;
+
+            document.getElementById("oysavings2").value = calc - ctsavings;
+        }
+
+        document.getElementById("cpa").onchange = function() {
+            if(getIDays() > 0) {
+                odays();
+            }
+            if(getIMonths() > 0) {
+                omonths();
+            }
+            if(getIYears() > 0) {
+                oyears();
+            }
+        }
+
+        document.getElementById("ctsavings").onchange = function () {
+            if(getIDays() > 0) {
+                odays();
+            }
+            if(getIMonths() > 0) {
+                omonths();
+            }
+            if(getIYears() > 0) {
+                oyears();
+            }
+
+        }
+
+        // check if input id idays changing
+        document.getElementById("idays").onchange = function () {
+            odays();
+        }
+        // check if input id imonths changing
+        document.getElementById("imonths").onchange = function () {
+            omonths();
+        }
+        // check if input id iyears changing
+        document.getElementById("iyears").onchange = function () {
+            oyears();
+        }
+
+
+
+    </script>
+</body>
+
+</html>
