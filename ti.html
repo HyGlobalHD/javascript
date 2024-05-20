@@ -33,21 +33,24 @@
 </head>
 <body>
     <h1>Item Ticket Allocation with Provably Fair</h1>
-    <p>Note: It is slow due to taking the random string from the randomorg</p>
-    <p>Note: Server hash are randomized, so it will be different everytime u refresh the page</p>
+    <p><b>Note: It is slow due to taking the random string from the randomorg</b></p>
+    <p><b>Note: Server hash are randomized, so it will be different everytime u refresh the page</b></p>
 <p>Rolling a Ticket: When a roll is initiated, a random process is used to select a ticket number within the range of 1 to 1,000,000 (or any other specified range). This random process usually involves combining various factors such as server seed, client seed, and random strings obtained from external sources like random.org. These factors are hashed together to generate a unique ticket number.</p>
 <p>
-Cryptographic hashing algorithms like SHA-256 are chosen for their properties of irreversibility and unpredictability. This means that given the hash value, it should be computationally infeasible to determine the original input data. As a result, the ticket number generation process is secure and resistant to manipulation or prediction.
+<b>Cryptographic hashing algorithms like SHA-256 are chosen for their properties of irreversibility and unpredictability</b>. This means that given the hash value, it should be computationally infeasible to determine the original input data. As a result, the ticket number generation process is secure and resistant to manipulation or prediction.
 </p>
 <p>
 
-"Provably fair" is a term used to describe a system in which the outcome of an event can be verified by both parties involved. It's often used in online gambling to ensure fairness, but it can also be applied in other areas such as blockchain transactions, voting systems, and random selection processes. The key idea is to create a transparent and trustworthy environment.
+<b>"Provably fair"</b> is a term used to describe a system in which the outcome of an event can be verified by both parties involved. It's often used in online gambling to ensure fairness, but it can also be applied in other areas such as blockchain transactions, voting systems, and random selection processes. The key idea is to create a transparent and trustworthy environment.
+</p>
+<p>
+ The combinedSeed for this provably fair algo: <b>const combinedSeed = i + serverSeed + clientSeed + trimmedRandomOrgString + trimmedRandomOrgString + clientSeed + serverSeed + i;</b>
 </p>
     <div id="output"></div>
     <p>Server Hash: <span id="serverHash"></span></p>
     <input type="number" id="epoch" placeholder="Enter number of epochs">
     <input type="number" id="players" placeholder="Enter number of players">
-    <button onclick="generateClientSeedInputs()">Generate Client Seed Inputs (DO THIS FIRST AFTER INPUT)</button> WARNING!!! THE PAGE WILL BE SLOW DEPENDING HOW MANY YOU PUT IT.
+    <button onclick="generateClientSeedInputs()">Generate Client Seed Inputs (DO THIS FIRST AFTER INPUT)</button><b> WARNING!!! THE PAGE WILL BE SLOW DEPENDING HOW MANY YOU PUT IT.</b>
     <div id="clientSeeds"></div>
 <p>Animation:</p>
 <input type="radio" id="enableAnimation" name="animation" value="enable" checked>
