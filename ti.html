@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Ticket Allocation with Provably Fair</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #output {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Item Ticket Allocation with Provably Fair</h1>
+    <p>Note: It is slow due to taking the random string from the randomorg</p>
+    <p>Note: Server hash are randomized, so it will be different everytime u refresh the page</p>
+<p>Rolling a Ticket: When a roll is initiated, a random process is used to select a ticket number within the range of 1 to 1,000,000 (or any other specified range). This random process usually involves combining various factors such as server seed, client seed, and random strings obtained from external sources like random.org. These factors are hashed together to generate a unique ticket number.</p>
+<p>
+Cryptographic hashing algorithms like SHA-256 are chosen for their properties of irreversibility and unpredictability. This means that given the hash value, it should be computationally infeasible to determine the original input data. As a result, the ticket number generation process is secure and resistant to manipulation or prediction.
+</p>
+<p>
+
+"Provably fair" is a term used to describe a system in which the outcome of an event can be verified by both parties involved. It's often used in online gambling to ensure fairness, but it can also be applied in other areas such as blockchain transactions, voting systems, and random selection processes. The key idea is to create a transparent and trustworthy environment.
+</p>
+    <div id="output"></div>
+    <p>Server Hash: <span id="serverHash"></span></p>
+    <input type="number" id="epoch" placeholder="Enter number of epochs">
+    <input type="number" id="players" placeholder="Enter number of players">
+    <button onclick="generateClientSeedInputs()">Generate Client Seed Inputs (DO THIS FIRST AFTER INPUT)</button> WARNING!!! THE PAGE WILL BE SLOW DEPENDING HOW MANY YOU PUT IT.
+    <div id="clientSeeds"></div>
+<p>Animation:</p>
+<input type="radio" id="enableAnimation" name="animation" value="enable" checked>
+<label for="enableAnimation">Enable</label>
+<input type="radio" id="disableAnimation" name="animation" value="disable">
+<label for="disableAnimation">Disable</label>
+<p>Animation Delay (in milliseconds): <input type="number" id="animationDelay" min="0" value="1000"></p>
+    <button onclick="roll()">Roll a Ticket (THIS IS LAST)</button>
+    <p>Random.org Strings: <span id="randomOrgStrings"></span></p>
+    <div id="rollResults"></div>
+
+
+    <script>
+        // Function to generate a random string
+        function generateRandomString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        // Initial data
+        const case1 = {
+            "bad": {
+                "percentage": 25,
+                "prize": 20
+            },
+            "good": {
+                "percentage": 10,
+                "prize": 24
+            },
+            "moderate": {
+                "percentage": 10,
+                "prize": 43
+            },
+            "very good": {
+                "percentage": 10,
+                "prize": 124
+            },
+            "vert very gppd": {
+                "percentage": 10,
+                "prize": 231
+            },
+            "teas": {
+                "percentage": 15,
+                "prize": 320
+            },
+            "chicken": {
+                "percentage": 13,
+                "prize": 552
+            },
+            "aras": {
+                "percentage": 5.5,
+                "prize": 614
+            },
+            "erere": {
+                "percentage": 1,
+                "prize": 751
+            },
+            "afsad": {
+                "percentage": 0.5,
+                "prize": 9353
+            }
+        };
+
+        // Step 1: Sort the items by prize in descending order
+        const sortedItems = Object.entries(case1).sort((a, b) => b[1].prize - a[1].prize);
+
+        // Step 2: Allocate items into a list of tickets based on their percentage
+        const totalTickets = 1000000;  // Changed to 1,000,000
+        let ticketAllocation = [];
+        let ticketRanges = {};
+        let currentTicketNumber = 0;
+
+        sortedItems.forEach(([item, info]) => {
+            const numTickets = Math.round(totalTickets * (info.percentage / 100));
+            ticketRanges[item] = [currentTicketNumber + 1, currentTicketNumber + numTickets];
+            ticketAllocation = ticketAllocation.concat(Array(numTickets).fill(item));
+            currentTicketNumber += numTickets;
+        });
+
+        // If there's any discrepancy in the ticket allocation due to rounding, handle it here
+        const currentTotalTickets = ticketAllocation.length;
+        if (currentTotalTickets < totalTickets) {
+            const extraTickets = totalTickets - currentTotalTickets;
+            const item = sortedItems[0][0];
+            ticketRanges[item][1] += extraTickets;
+            ticketAllocation = ticketAllocation.concat(Array(extraTickets).fill(item));
+        } else if (currentTotalTickets > totalTickets) {
+            ticketAllocation = ticketAllocation.slice(0, totalTickets);
+        }
+
+        // Output the result
+        const outputDiv = document.getElementById('output');
+        let outputHTML = `
+            <p>Total tickets allocated: ${ticketAllocation.length}</p>
+        `;
+        sortedItems.forEach(([item]) => {
+            const [start, end] = ticketRanges[item];
+            outputHTML += `<p><b>${item} (${case1[item].percentage}%)</b> (Prize: ${case1[item].prize}) || tickets: ${start} to ${end}</p>`;
+        });
+        outputDiv.innerHTML = outputHTML;
+
+        // Generate server seed and server hash
+        const serverSeed = generateRandomString(64);
+        sha256(serverSeed).then(serverHash => {
+            document.getElementById('serverHash').innerText = serverHash;
+        });
+
+        // Function to generate a SHA-256 hash
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        // Function to generate client seed inputs
+        function generateClientSeedInputs() {
+            const players = parseInt(document.getElementById('players').value);
+            if (!players || players <= 0) {
+                alert('Please enter a valid number of players');
+                return;
+            }
+
+            const clientSeedsDiv = document.getElementById('clientSeeds');
+            clientSeedsDiv.innerHTML = '';
+
+            for (let i = 0; i < players; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `clientSeed${i}`;
+                input.placeholder = `Enter client seed for player ${i + 1}`;
+                
+                const randomLengthInput = document.createElement('input');
+                randomLengthInput.type = 'number';
+                randomLengthInput.id = `randomLength${i}`;
+                randomLengthInput.placeholder = 'Length (5-32)';
+                randomLengthInput.min = 5;
+                randomLengthInput.max = 32;
+		randomLengthInput.value = 32;
+
+                const button = document.createElement('button');
+                button.innerText = 'Generate Random Seed';
+                button.onclick = async () => {
+                    const length = parseInt(randomLengthInput.value);
+                    if (!length || length < 5 || length > 32) {
+                        alert('Please enter a valid length between 5 and 32');
+                        return;
+                    }
+                    const response = await fetch(`https://www.random.org/strings/?num=1&len=${length}&digits=on&upperalpha=on&loweralpha=on&unique=on&format=plain&rnd=new`);
+                    const randomSeed = await response.text();
+                    input.value = randomSeed.trim();
+                };
+
+                clientSeedsDiv.appendChild(input);
+                clientSeedsDiv.appendChild(randomLengthInput);
+                clientSeedsDiv.appendChild(button);
+                clientSeedsDiv.appendChild(document.createElement('br'));
+            }
+        }
+
+
+        // Function to roll a ticket and show the corresponding item
+async function roll() {
+    const epoch = parseInt(document.getElementById('epoch').value);
+    const players = parseInt(document.getElementById('players').value);
+    const enableAnimation = document.getElementById('enableAnimation').checked;
+    const animationDelay = parseInt(document.getElementById('animationDelay').value);
+
+    if (!epoch || epoch <= 0) {
+        alert('Please enter a valid number of epochs');
+        return;
+    }
+    if (!players || players <= 0) {
+        alert('Please enter a valid number of players');
+        return;
+    }
+
+    // Function to delay execution
+    const sleep = (milliseconds) => {
+        return new Promise(resolve => setTimeout(resolve, milliseconds));
+    }
+
+    // Fetch random strings from random.org for each player
+    const randomOrgStrings = await Promise.all(
+        Array.from({ length: players }, async () => {
+            const response = await fetch('https://www.random.org/strings/?num=1&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=plain&rnd=new');
+            const randomOrgString = await response.text();
+            return randomOrgString.trim();
+        })
+    );
+    document.getElementById('randomOrgStrings').innerText = randomOrgStrings.join(', ');
+
+    // Build table headers
+    let tableHTML = '<table><tr><th>Players</th>';
+    for (let i = 0; i < players; i++) {
+        tableHTML += `<th>Player ${i + 1}</th>`;
+    }
+    tableHTML += '</tr><tr><td>Random.org String</td>';
+    randomOrgStrings.forEach((str) => {
+        tableHTML += `<td>${str}</td>`;
+    });
+    tableHTML += '</tr><tr><td>Client Seed</td>';
+    for (let i = 0; i < players; i++) {
+        const clientSeed = document.getElementById(`clientSeed${i}`).value;
+        tableHTML += `<td>${clientSeed}</td>`;
+    }
+    tableHTML += '</tr>';
+
+    // Initialize total prizes array, winner variables, and coinflip ticket
+    let totalPrizes = Array(players).fill(0);
+    let maxPrize = 0;
+    let winnerIndex = -1;
+    let tiePlayers = [];
+    let coinflipTicket = null;
+
+    // Calculate and display results for each epoch
+    for (let i = 0; i < epoch; i++) {
+        tableHTML += `<tr><td>Epoch ${i + 1}</td>`;
+        for (let player = 0; player < players; player++) {
+            const clientSeed = document.getElementById(`clientSeed${player}`).value;
+            const trimmedRandomOrgString = randomOrgStrings[player];
+            const combinedSeed = i + serverSeed + clientSeed + trimmedRandomOrgString + trimmedRandomOrgString + clientSeed + serverSeed + i;
+
+            // Generate a SHA-256 hash of the combined seed
+            const combinedHash = await sha256(combinedSeed);
+            const randomNumber = parseInt(combinedHash.slice(0, 8), 16) % totalTickets;
+
+            const item = ticketAllocation[randomNumber];
+            const prize = case1[item].prize;
+            totalPrizes[player] += prize;
+            tableHTML += `<td>You rolled ticket number ${randomNumber + 1}: <b>${item} (${case1[item].percentage}%)</b> (Prize: ${prize})</td>`;
+
+            // Check for winner and ties
+            if (totalPrizes[player] > maxPrize) {
+                maxPrize = totalPrizes[player];
+                winnerIndex = player;
+                tiePlayers = [];
+            } else if (totalPrizes[player] === maxPrize) {
+                tiePlayers.push(player);
+            }
+        }
+        tableHTML += '</tr>';
+
+        // Display table HTML with animation if enabled
+        if (enableAnimation) {
+            document.getElementById('rollResults').innerHTML = tableHTML;
+            await sleep(animationDelay);
+        }
+    }
+
+    // Resolve ties with a coinflip ticket if necessary
+    if (tiePlayers.length > 0) {
+        coinflipTicket = Math.random();
+        const tieRange = 1 / (tiePlayers.length + 1);
+        let currentRange = tieRange;
+        for (let i = 0; i < tiePlayers.length; i++) {
+            if (coinflipTicket <= currentRange) {
+                winnerIndex = tiePlayers[i];
+                break;
+            }
+            currentRange += tieRange;
+        }
+    }
+
+    // Display total prizes
+    tableHTML += '<tr><td>Total Prizes</td>';
+    totalPrizes.forEach(prize => {
+        tableHTML += `<td>${prize}</td>`;
+    });
+    tableHTML += '</tr>';
+
+    tableHTML += '</table>';
+    document.getElementById('rollResults').innerHTML = tableHTML;
+
+    // Alert the winner and display rankings
+    if (winnerIndex !== -1) {
+        const winnerName = `Player ${winnerIndex + 1}`;
+        let winnerDetails = `The winner is ${winnerName} with total prize of ${maxPrize}`;
+        if (coinflipTicket !== null) {
+            winnerDetails += `, Tie Ticket: ${coinflipTicket}`;
+        }
+        alert(winnerDetails);
+        displayRankings(totalPrizes);
+    } else {
+        alert('No winner found');
+    }
+}
+
+
+
+
+// Function to display rankings
+function displayRankings(totalPrizes) {
+    const rankingsDiv = document.createElement('div');
+    rankingsDiv.innerHTML = '<h3>Rankings</h3>';
+    const rankedPlayers = totalPrizes.map((prize, index) => ({ player: index + 1, prize })).sort((a, b) => b.prize - a.prize);
+    rankedPlayers.forEach((rank, index) => {
+        rankingsDiv.innerHTML += `<p>Rank ${index + 1}: Player ${rank.player} - Total Prize: ${rank.prize}</p>`;
+    });
+    document.getElementById('rollResults').appendChild(rankingsDiv);
+}
+
+
+// Function to generate random seeds for all players
+async function generateRandomSeeds() {
+    const players = parseInt(document.getElementById('players').value);
+
+    // Fetch random strings from random.org for each player
+    const randomOrgStrings = await Promise.all(
+        Array.from({ length: players }, async () => {
+            const response = await fetch('https://www.random.org/strings/?num=1&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=plain&rnd=new');
+            const randomOrgString = await response.text();
+            return randomOrgString.trim();
+        })
+    );
+
+    // Populate random strings in client seed inputs
+    for (let i = 0; i < players; i++) {
+        document.getElementById(`clientSeed${i}`).value = randomOrgStrings[i];
+    }
+
+    // Display random strings
+    document.getElementById('randomOrgStrings').innerText = randomOrgStrings.join(', ');
+}
+
+// Create a button for generating universal random seeds
+const generateSeedsButton = document.createElement('button');
+generateSeedsButton.textContent = 'Universal Generate Random Seeds';
+generateSeedsButton.addEventListener('click', generateRandomSeeds);
+
+// Append the universal button next to the roll button
+const rollButton = document.querySelector('button[onclick="roll()"]');
+rollButton.parentNode.insertBefore(generateSeedsButton, rollButton.nextSibling);
+
+    </script>
+</body>
+</html>
