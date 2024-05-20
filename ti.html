@@ -52,15 +52,18 @@
     <input type="number" id="players" placeholder="Enter number of players">
     <button onclick="generateClientSeedInputs()">Generate Client Seed Inputs (DO THIS FIRST AFTER INPUT)</button><b> WARNING!!! THE PAGE WILL BE SLOW DEPENDING HOW MANY YOU PUT IT.</b>
     <div id="clientSeeds"></div>
-<p>Animation:</p>
-<input type="radio" id="enableAnimation" name="animation" value="enable" checked>
+<p>Animation: <b> note: disable this if you are testing a large amount of epoch and player</b></p>
+<input type="radio" id="enableAnimation" name="animation" value="enable">
 <label for="enableAnimation">Enable</label>
-<input type="radio" id="disableAnimation" name="animation" value="disable">
-<label for="disableAnimation">Disable</label>
+<input type="radio" id="disableAnimation" name="animation" value="disable" checked> 
+<label for="disableAnimation">Disable</label> 
 <p>Animation Delay (in milliseconds): <input type="number" id="animationDelay" min="0" value="1000"></p>
     <button onclick="roll()">Roll a Ticket (THIS IS LAST)</button>
     <p>Random.org Strings: <span id="randomOrgStrings"></span></p>
-    <div id="rollResults"></div>
+Stats: <div id="percentageResults"></div>
+Roll Result: <div id="rollResults"></div>
+
+
 
 
     <script>
@@ -221,7 +224,6 @@
         }
 
 
-        // Function to roll a ticket and show the corresponding item
 async function roll() {
     const epoch = parseInt(document.getElementById('epoch').value);
     const players = parseInt(document.getElementById('players').value);
@@ -275,6 +277,9 @@ async function roll() {
     let tiePlayers = [];
     let coinflipTicket = null;
 
+    // Initialize count of items pulled by each player
+    let itemCounts = Array(players).fill().map(() => ({}));
+
     // Calculate and display results for each epoch
     for (let i = 0; i < epoch; i++) {
         tableHTML += `<tr><td>Epoch ${i + 1}</td>`;
@@ -291,6 +296,12 @@ async function roll() {
             const prize = case1[item].prize;
             totalPrizes[player] += prize;
             tableHTML += `<td>You rolled ticket number ${randomNumber + 1}: <b>${item} (${case1[item].percentage}%)</b> (Prize: ${prize})</td>`;
+
+            // Count the items pulled by each player
+            if (!itemCounts[player][item]) {
+                itemCounts[player][item] = 0;
+            }
+            itemCounts[player][item]++;
 
             // Check for winner and ties
             if (totalPrizes[player] > maxPrize) {
@@ -334,6 +345,26 @@ async function roll() {
     tableHTML += '</table>';
     document.getElementById('rollResults').innerHTML = tableHTML;
 
+    // Calculate and display the percentage of each item pulled by each player
+    let percentageResultsHTML = '<table><tr><th>Player</th>';
+    Object.keys(case1).forEach(item => {
+        percentageResultsHTML += `<th>${item} (%)</th>`;
+    });
+    percentageResultsHTML += '</tr>';
+
+    for (let player = 0; player < players; player++) {
+        percentageResultsHTML += `<tr><td>Player ${player + 1}</td>`;
+        Object.keys(case1).forEach(item => {
+            const count = itemCounts[player][item] || 0;
+            const percentage = ((count / epoch) * 100).toFixed(2);
+            percentageResultsHTML += `<td>${percentage}</td>`;
+        });
+        percentageResultsHTML += '</tr>';
+    }
+
+    percentageResultsHTML += '</table>';
+    document.getElementById('percentageResults').innerHTML = percentageResultsHTML;
+
     // Alert the winner and display rankings
     if (winnerIndex !== -1) {
         const winnerName = `Player ${winnerIndex + 1}`;
@@ -347,6 +378,7 @@ async function roll() {
         alert('No winner found');
     }
 }
+
 
 
 
