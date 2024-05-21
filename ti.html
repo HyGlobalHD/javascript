@@ -43,11 +43,16 @@
 
 <b>"Provably fair"</b> is a term used to describe a system in which the outcome of an event can be verified by both parties involved. It's often used in online gambling to ensure fairness, but it can also be applied in other areas such as blockchain transactions, voting systems, and random selection processes. The key idea is to create a transparent and trustworthy environment.
 </p>
-<p>
- The combinedSeed for this provably fair algo: <b>const combinedSeed = i + serverSeed + clientSeed + trimmedRandomOrgString + trimmedRandomOrgString + clientSeed + serverSeed + i;</b>
-</p>
+
     <div id="output"></div>
-    <p>Server Hash: <span id="serverHash"></span></p>
+    <p>Server Hash: <b><span id="serverHash"></span></b></p>
+<p>Pick combinedSeed type: </p> 
+<input type="radio" id="cseed1" name="cseed" value="1" checked>
+<label for="cseed1"><b>i + serverSeed + clientSeed + trimmedRandomOrgString + trimmedRandomOrgString + clientSeed + serverSeed + i</b></label>
+<br>
+<input type="radio" id="cseed2" name="cseed" value="2"> 
+<label for="cseed2"><b>trimmedRandomOrgString:i+1:i+1:players:clientSeed:serverSeed</b></label> 
+<br>
     <input type="number" id="epoch" placeholder="Enter number of epochs">
     <input type="number" id="players" placeholder="Enter number of players">
     <button onclick="generateClientSeedInputs()">Generate Client Seed Inputs (DO THIS FIRST AFTER INPUT)</button><b> WARNING!!! THE PAGE WILL BE SLOW DEPENDING HOW MANY YOU PUT IT.</b>
@@ -77,54 +82,38 @@ Roll Result: <div id="rollResults"></div>
             return result;
         }
 
+	const caseprice = 0.54;
+	let totalcaseprice = 0;
+
         // Initial data
         const case1 = {
-            "bad": {
-                "percentage": 25,
-                "prize": 20
+            "P250 | Sand Dune (Minimal Wear)": {
+                "percentage": 84,
+                "prize": 0.01
             },
-            "good": {
-                "percentage": 10,
-                "prize": 24
+            "AWP | Pit Viper (Field-Tested)": {
+                "percentage": 8.5,
+                "prize": 0.59
             },
-            "moderate": {
-                "percentage": 10,
-                "prize": 43
+            "AWP | Worm God (Minimal Wear)": {
+                "percentage": 3.5,
+                "prize": 1.41
             },
-            "very good": {
-                "percentage": 10,
-                "prize": 124
+            "StatTrak™ AWP | Mortis (Field-Tested)": {
+                "percentage": 1.5,
+                "prize": 4.22
             },
-            "vert very gppd": {
-                "percentage": 10,
-                "prize": 231
+            "AWP | Mortis (Factory New)": {
+                "percentage": 1.5,
+                "prize": 6.06
             },
-            "teas": {
-                "percentage": 15,
-                "prize": 320
-            },
-            "chicken": {
-                "percentage": 13,
-                "prize": 552
-            },
-            "aras": {
-                "percentage": 5.5,
-                "prize": 614
-            },
-            "erere": {
-                "percentage": 1.4,
-                "prize": 751
-            },
-            "afsad": {
-                "percentage": 0.14,
-                "prize": 9353
-            },
-            "INSANE DLORE": {
-                "percentage": 0.01,
-                "prize": 9332353
+            "AWP Elite Build Factory New": {
+                "percentage": 1,
+                "prize": 21.83
             }
         };
 
+        
         // Step 1: Sort the items by prize in descending order
         const sortedItems = Object.entries(case1).sort((a, b) => b[1].prize - a[1].prize);
 
@@ -152,16 +141,40 @@ Roll Result: <div id="rollResults"></div>
             ticketAllocation = ticketAllocation.slice(0, totalTickets);
         }
 
-        // Output the result
-        const outputDiv = document.getElementById('output');
-        let outputHTML = `
-            <p>Total tickets allocated: ${ticketAllocation.length}</p>
-        `;
-        sortedItems.forEach(([item]) => {
-            const [start, end] = ticketRanges[item];
-            outputHTML += `<p><b>${item} (${case1[item].percentage}%)</b> (Prize: ${case1[item].prize}) || tickets: ${start} to ${end}</p>`;
-        });
-        outputDiv.innerHTML = outputHTML;
+// Output the result as a table
+const outputDiv = document.getElementById('output');
+let outputHTML = `
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Percentage</th>
+                <th>Prize</th>
+                <th>Tickets</th>
+            </tr>
+        </thead>
+        <tbody>
+`;
+
+sortedItems.forEach(([item]) => {
+    const [start, end] = ticketRanges[item];
+    outputHTML += `
+        <tr>
+            <td><b>${item}</b></td>
+            <td>${case1[item].percentage}%</td>
+            <td>${case1[item].prize}</td>
+            <td>${start} to ${end}</td>
+        </tr>
+    `;
+});
+
+outputHTML += `
+        </tbody>
+    </table>
+`;
+
+outputDiv.innerHTML = outputHTML;
+
 
         // Generate server seed and server hash
         const serverSeed = generateRandomString(64);
@@ -228,6 +241,7 @@ async function roll() {
     const epoch = parseInt(document.getElementById('epoch').value);
     const players = parseInt(document.getElementById('players').value);
     const enableAnimation = document.getElementById('enableAnimation').checked;
+    const randomType = document.getElementById('cseed1').checked;
     const animationDelay = parseInt(document.getElementById('animationDelay').value);
 
     if (!epoch || epoch <= 0) {
@@ -255,15 +269,15 @@ async function roll() {
     document.getElementById('randomOrgStrings').innerText = randomOrgStrings.join(', ');
 
     // Build table headers
-    let tableHTML = '<table><tr><th>Players</th>';
+    let tableHTML = '<table><tr><th><b>Players</b></th>';
     for (let i = 0; i < players; i++) {
         tableHTML += `<th>Player ${i + 1}</th>`;
     }
-    tableHTML += '</tr><tr><td>Random.org String</td>';
+    tableHTML += '</tr><tr><td><b>Random.org String</b></td>';
     randomOrgStrings.forEach((str) => {
         tableHTML += `<td>${str}</td>`;
     });
-    tableHTML += '</tr><tr><td>Client Seed</td>';
+    tableHTML += '</tr><tr><td><b>Client Seed</b></td>';
     for (let i = 0; i < players; i++) {
         const clientSeed = document.getElementById(`clientSeed${i}`).value;
         tableHTML += `<td>${clientSeed}</td>`;
@@ -286,7 +300,14 @@ async function roll() {
         for (let player = 0; player < players; player++) {
             const clientSeed = document.getElementById(`clientSeed${player}`).value;
             const trimmedRandomOrgString = randomOrgStrings[player];
-            const combinedSeed = i + serverSeed + clientSeed + trimmedRandomOrgString + trimmedRandomOrgString + clientSeed + serverSeed + i;
+            let combinedSeed = i + serverSeed + clientSeed + trimmedRandomOrgString + trimmedRandomOrgString + clientSeed + serverSeed + i;
+
+		if(randomType) {
+        	    combinedSeed = i + serverSeed + clientSeed + trimmedRandomOrgString + trimmedRandomOrgString + clientSeed + serverSeed + i;
+		}else{
+        	    combinedSeed = `${trimmedRandomOrgString}:${i+1}:${i+1}:${players}:${clientSeed}:${serverSeed}`;
+		}
+		console.log(combinedSeed);
 
             // Generate a SHA-256 hash of the combined seed
             const combinedHash = await sha256(combinedSeed);
@@ -295,7 +316,7 @@ async function roll() {
             const item = ticketAllocation[randomNumber];
             const prize = case1[item].prize;
             totalPrizes[player] += prize;
-            tableHTML += `<td>You rolled ticket number ${randomNumber + 1}: <b>${item} (${case1[item].percentage}%)</b> (Prize: ${prize})</td>`;
+            tableHTML += `<td>ticket number: <b>${randomNumber + 1}</b>: <br><b>${item} (${case1[item].percentage}%)</b><br> (Prize: <b>${prize}</b>)</td>`;
 
             // Count the items pulled by each player
             if (!itemCounts[player][item]) {
@@ -335,11 +356,38 @@ async function roll() {
         }
     }
 
-    // Display total prizes
-    tableHTML += '<tr><td>Total Prizes</td>';
-    totalPrizes.forEach(prize => {
-        tableHTML += `<td>${prize}</td>`;
-    });
+// Display total prizes
+tableHTML += '<tr><td>Total Prizes</td>';
+totalPrizes.forEach(prize => {
+    tableHTML += `<td>${prize.toFixed(2)}</td>`;
+});
+tableHTML += '</tr>';
+
+let totalCasePrice = caseprice * epoch;
+tableHTML += '<tr><td>Total Cost ( ' + `${caseprice.toFixed(2)} x ${epoch}` + '  )</td>';
+totalPrizes.forEach(prize => {
+    tableHTML += `<td>${totalCasePrice.toFixed(2)}</td>`;
+});
+tableHTML += '</tr>';
+
+let totalAllProfit = 0;
+let totalAllCost = totalCasePrice * players;
+let totalPrize = 0;
+tableHTML += '<tr><td>Profit</td>';
+totalPrizes.forEach(prize => {
+    let profit = (prize - totalCasePrice).toFixed(2);
+    totalAllProfit = (totalAllProfit + (prize - totalCasePrice));
+    totalPrize += prize;
+    if(profit > 0) {
+    tableHTML += `<td><b>${profit}</b></td>`;
+    } else {
+    tableHTML += `<td>${profit}</td>`;
+    } 
+
+});
+tableHTML += '</tr>';
+
+
     tableHTML += '</tr>';
 
     tableHTML += '</table>';
@@ -348,7 +396,7 @@ async function roll() {
     // Calculate and display the percentage of each item pulled by each player
     let percentageResultsHTML = '<table><tr><th>Player</th>';
     Object.keys(case1).forEach(item => {
-        percentageResultsHTML += `<th>${item} (%)</th>`;
+        percentageResultsHTML += `<th>${item} (${case1[item].percentage}%)</th>`;
     });
     percentageResultsHTML += '</tr>';
 
@@ -363,12 +411,22 @@ async function roll() {
     }
 
     percentageResultsHTML += '</table>';
+
+percentageResultsHTML += "<p>Total All Profit combined: <b>" + totalAllProfit.toFixed(2) + "</b><br>Total All Cost: <b>" + totalAllCost.toFixed(2) + "</b></p>";
+percentageResultsHTML += "<p>Total profit devided by <b>" + players + " players</b> : <b>" + (totalAllProfit/players).toFixed(2) + "</b></p>";
+
     document.getElementById('percentageResults').innerHTML = percentageResultsHTML;
+
+console.log("Total All Profit combined: " + totalAllProfit.toFixed(2) + "\nTotal All Cost: " + totalAllCost.toFixed(2));
+console.log("Total profit devided by " + players + " players : " + (totalAllProfit/players).toFixed(2));
+
+//
+console.log("Total Winning if only 1 players get all the winning: " + totalPrize.toFixed(2) + "\nMinus the cost: " + (totalPrize - totalCasePrice).toFixed(2));
 
     // Alert the winner and display rankings
     if (winnerIndex !== -1) {
         const winnerName = `Player ${winnerIndex + 1}`;
-        let winnerDetails = `The winner is ${winnerName} with total prize of ${maxPrize}`;
+        let winnerDetails = `The winner is ${winnerName} with total prize of ${maxPrize.toFixed(2)}`;
         if (coinflipTicket !== null) {
             winnerDetails += `, Tie Ticket: ${coinflipTicket}`;
         }
@@ -389,7 +447,7 @@ function displayRankings(totalPrizes) {
     rankingsDiv.innerHTML = '<h3>Rankings</h3>';
     const rankedPlayers = totalPrizes.map((prize, index) => ({ player: index + 1, prize })).sort((a, b) => b.prize - a.prize);
     rankedPlayers.forEach((rank, index) => {
-        rankingsDiv.innerHTML += `<p>Rank ${index + 1}: Player ${rank.player} - Total Prize: ${rank.prize}</p>`;
+        rankingsDiv.innerHTML += `<p>Rank ${index + 1}: Player ${rank.player} - Total Prize: ${rank.prize.toFixed(2)}</p>`;
     });
     document.getElementById('rollResults').appendChild(rankingsDiv);
 }
@@ -425,6 +483,7 @@ generateSeedsButton.addEventListener('click', generateRandomSeeds);
 // Append the universal button next to the roll button
 const rollButton = document.querySelector('button[onclick="roll()"]');
 rollButton.parentNode.insertBefore(generateSeedsButton, rollButton.nextSibling);
+
 
     </script>
 </body>
