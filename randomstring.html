@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>String Processor</title>
+</head>
+<body>
+    <div id="output"></div>
+
+    <script>
+        // Fetch the strings from the given URL
+        fetch('https://www.random.org/strings/?num=4&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=plain&rnd=new')
+            .then(response => response.text())
+            .then(data => {
+                // Remove newline characters and spaces
+                let processedData = data.replace(/\s+/g, '');
+                // Display the processed string
+                document.getElementById('output').textContent = processedData;
+            })
+            .catch(error => {
+                console.error('Error fetching the strings:', error);
+            });
+    </script>
+</body>
+</html>
