@@ -16,3 +16,4 @@ Terrain gen note: the larger the size, the more lag it is.
 - [pubgnsfrozen.html](https://hyglobalhd.github.io/javascript/pubgnsfrozen.html) : to simulate PUBG New State Crates Opening For Frozen Beryl M762 Events
 - [drtl](https://hyglobalhd.github.io/javascript/drtl/) : idk
 - [Ticket Allocation with Provably Fair](https://hyglobalhd.github.io/javascript/ti.html) : Rolling a Ticket: When a roll is initiated, a random process is used to select a ticket number within the range of 1 to 1,000,000 (or any other specified range). This random process usually involves combining various factors such as server seed, client seed, and random strings obtained from external sources like random.org. These factors are hashed together to generate a unique ticket number.
+- [random string](https://hyglobalhd.github.io/javascript/randomstring.html) : just a random string with the length of 128, which are taken from random.org, refresh if you wanted a new string
