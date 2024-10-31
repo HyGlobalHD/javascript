@@ -7,20 +7,40 @@
 </head>
 <body>
     <div id="output"></div>
+    <button id="copyButton">Copy to Clipboard</button>
+    <button id="retryButton">Retry</button>
 
     <script>
-        // Fetch the strings from the given URL
-        fetch('https://www.random.org/strings/?num=4&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=plain&rnd=new')
-            .then(response => response.text())
-            .then(data => {
-                // Remove newline characters and spaces
-                let processedData = data.replace(/\s+/g, '');
-                // Display the processed string
-                document.getElementById('output').textContent = processedData;
-            })
-            .catch(error => {
-                console.error('Error fetching the strings:', error);
+        function fetchAndProcessData() {
+            // Fetch the strings from the given URL
+            fetch('https://www.random.org/strings/?num=4&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=plain&rnd=new')
+                .then(response => response.text())
+                .then(data => {
+                    // Remove newline characters and spaces
+                    let processedData = data.replace(/\s+/g, '');
+                    // Display the processed string
+                    document.getElementById('output').textContent = processedData;
+                })
+                .catch(error => {
+                    console.error('Error fetching the strings:', error);
+                });
+        }
+
+        // Function to copy output to clipboard
+        document.getElementById('copyButton').addEventListener('click', () => {
+            const outputText = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(outputText).then(() => {
+               // alert("Copied to clipboard!");
+            }).catch(error => {
+                console.error("Error copying to clipboard:", error);
             });
+        });
+
+        // Retry function to fetch data again
+        document.getElementById('retryButton').addEventListener('click', fetchAndProcessData);
+
+        // Initial fetch on page load
+        fetchAndProcessData();
     </script>
 </body>
 </html>
