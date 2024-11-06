@@ -26,6 +26,14 @@
         }
         .modal.show { display: block; }
         .modal button { margin-top: 10px; padding: 5px 10px; cursor: pointer; }
+	.emote-bubble {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            padding: 2px 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -76,6 +84,10 @@
         const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
         const users = [];
         const entities = [];
+        const emotes = {
+            collision: ["😡", "😠", "😤", "😱", "💢", "💥", "😖", "😣", "😬", "bonk", "*thud*", "ouch!", "oof", "💥POW!💥", "😵💫", ">:(", "⋋_⋌", "(-_-;)", "(╯°□°）╯︵ ┻━┻"],
+            nearCenter: ["😃", "😎", "🎉", "😁", "😆", "😄", "🥳", "🤩", "💪", "🏆", "🥇", "👑", "Lets go!🥇"]
+        };
         const tickRate = 50;
         let serverHash = "server123";
         let tick = 0;
@@ -121,13 +133,17 @@
 
 
         class Entity {
-            constructor(userId, seed, color) {
+            constructor(userId, seed, color, enseed) {
                 this.userId = userId;
                 this.seed = seed;
+		this.enseed = enseed;
                 this.color = color;
                 this.position = this.getRandomEdgePosition();
                 this.lastPosition = { ...this.position };
                 this.direction = 'Idle';
+                this.velocity = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 }; // Random initial velocity
+                this.emote = null;
+                this.emoteTimeout = null;
             }
 
             getRandomEdgePosition() {
@@ -151,7 +167,69 @@
                 this.position.y = Math.max(0, Math.min(canvas.height, this.position.y));
 
                 this.updateDirection();
+                this.detectNearCenter();
+		this.enseed = combinedSeed;
             }
+
+            detectNearCenter() {
+                const dx = this.position.x - canvasCenter.x;
+                const dy = this.position.y - canvasCenter.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 50 && !this.emote) { 
+                    this.showEmote("nearCenter");
+                }
+            }
+
+    showEmote(type) {
+        if (this.emoteTimeout) clearTimeout(this.emoteTimeout); // Clear any existing timeout
+        this.emote = emotes[type][Math.floor(Math.random() * emotes[type].length)];
+        this.emoteTimeout = setTimeout(() => this.emote = null, 1000);
+    }
+            detectCollision() {
+                for (const otherEntity of entities) {
+                    if (otherEntity !== this) {
+                        const dx = this.position.x - otherEntity.position.x;
+                        const dy = this.position.y - otherEntity.position.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+			/*
+                        if (distance < 10) { // Collision threshold
+                            this.handleCollision(otherEntity, dx, dy);
+                        }
+			if(!this.emote) {
+                            this.showEmote("collision");
+			}*/
+                        if (distance < 10) {
+                            this.showEmote("collision");
+                            this.handleCollision(otherEntity, dx, dy);
+                            //this.velocity.x *= -1;
+                            //this.velocity.y *= -1;
+                        }
+                    }
+                }
+            }
+
+            handleCollision(otherEntity, dx, dy) {
+                const angle = Math.atan2(dy, dx);
+                const speed1 = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+                const speed2 = Math.sqrt(otherEntity.velocity.x ** 2 + otherEntity.velocity.y ** 2);
+
+                const newVelocityX1 = speed2 * Math.cos(angle);
+                const newVelocityY1 = speed2 * Math.sin(angle);
+                const newVelocityX2 = speed1 * Math.cos(angle + Math.PI);
+                const newVelocityY2 = speed1 * Math.sin(angle + Math.PI);
+
+                this.velocity.x = newVelocityX1;
+                this.velocity.y = newVelocityY1;
+                otherEntity.velocity.x = newVelocityX2;
+                otherEntity.velocity.y = newVelocityY2;
+
+                this.position.x += this.velocity.x;
+                this.position.y += this.velocity.y;
+                otherEntity.position.x += otherEntity.velocity.x;
+                otherEntity.position.y += otherEntity.velocity.y;
+            }
+
 
 updateDirection() {
     const dx = this.position.x - this.lastPosition.x;
@@ -231,7 +309,8 @@ updateDirection() {
             for (let i = 0; i < entityCount; i++) {
                 //const seed = Math.floor(Math.random() * 100000);
                 const seed = await generateEntitySeed();
-                const entity = new Entity(userId, seed, userColor);
+		const enseed = await sha256(seed);
+                const entity = new Entity(userId, seed, userColor, enseed);
                 entities.push(entity);
                 addEntityToLegend(entity, username);
             }
@@ -250,7 +329,8 @@ async function autoAddUsers() {
 
         for (let j = 0; j < entitiesPerUser; j++) {
             const entitySeed = await generateEntitySeed();
-            const entity = new Entity(userId, entitySeed, userColor);
+	    const enseed = await sha256(entitySeed);
+            const entity = new Entity(userId, entitySeed, userColor, enseed);
             entities.push(entity);
 addEntityToLegend(entity, username);
         }
@@ -258,32 +338,70 @@ addEntityToLegend(entity, username);
 
 }
 
-        function addEntityToLegend(entity, username) {
-            const legend = document.getElementById('legend');
-            const entityInfo = document.createElement('div');
-            entityInfo.className = 'entity-info';
-            entityInfo.id = `entity-${entity.seed}`;
+async function addEntityToLegend(entity, username) {
+    const legend = document.getElementById('legend');
+    const entityInfo = document.createElement('div');
+    entityInfo.className = 'entity-info';
+    entityInfo.id = `entity-${entity.seed}`;
 
-            const colorBox = document.createElement('div');
-            colorBox.className = 'color-box';
-            colorBox.style.backgroundColor = entity.color;
+    const colorBox = document.createElement('div');
+    colorBox.className = 'color-box';
+    colorBox.style.backgroundColor = entity.color;
 
-            const text = document.createElement('span');
-            text.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
+    // Create span for main display text
+    const text = document.createElement('span');
+    text.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
 
-            entityInfo.appendChild(colorBox);
-            entityInfo.appendChild(text);
-            legend.appendChild(entityInfo);
-        }
+    // Seed information container (initially hidden)
+    const seedInfo = document.createElement('div');
+    seedInfo.className = 'seed-info';
+    seedInfo.style.display = 'none';
+    seedInfo.style.marginTop = '5px';
+    seedInfo.style.maxWidth = '250px';
+    seedInfo.style.wordWrap = 'break-word';
 
-        function updateLegendDirections() {
-            entities.forEach(entity => {
-                const entityInfo = document.getElementById(`entity-${entity.seed}`);
-                const directionText = entityInfo.querySelector('span');
-                const username = users.find(user => user.id === entity.userId).name;
-                directionText.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
-            });
-        }
+    // Seed and encrypted seed text
+    const seedText = document.createElement('p');
+    seedText.textContent = `Seed: ${entity.seed}`;
+
+    const encryptedSeedText = document.createElement('p');
+    encryptedSeedText.id = `encrypted-seed-${entity.seed}`;
+    encryptedSeedText.textContent = `Combined Seed: ${entity.getCombinedSeed()}\n\nEncrypted Seed: ${entity.enSeed}`;
+
+    seedInfo.appendChild(seedText);
+    seedInfo.appendChild(encryptedSeedText);
+
+    // Toggle button to show/hide seed information
+    const toggleButton = document.createElement('button');
+    toggleButton.textContent = 'Show Seed Info';
+    toggleButton.onclick = function () {
+        const isHidden = seedInfo.style.display === 'none';
+        seedInfo.style.display = isHidden ? 'block' : 'none';
+        toggleButton.textContent = isHidden ? 'Hide Seed Info' : 'Show Seed Info';
+    };
+
+    // Append all elements to the entity info container
+    entityInfo.appendChild(colorBox);
+    entityInfo.appendChild(text);
+    entityInfo.appendChild(toggleButton);
+    entityInfo.appendChild(seedInfo);
+
+    // Add entity info to the legend
+    legend.appendChild(entityInfo);
+}
+
+function updateLegendDirections() {
+    entities.forEach(entity => {
+        const entityInfo = document.getElementById(`entity-${entity.seed}`);
+        const directionText = entityInfo.querySelector('span');
+        const username = users.find(user => user.id === entity.userId).name;
+        directionText.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
+
+        // Update the Encrypted Seed display with the current combined seed
+        const encryptedSeedText = document.getElementById(`encrypted-seed-${entity.seed}`);
+        encryptedSeedText.textContent = `Combined Seed: ${entity.getCombinedSeed()} \n\n\n Encrypted Seed: ${entity.enseed}`;
+    });
+}
 
         function openModal(winnerEntity) {
             const congratsModal = document.getElementById('congratsModal');
@@ -336,6 +454,12 @@ function renderLegend() {
             ctx.beginPath();
             ctx.arc(entity.position.x, entity.position.y, 5, 0, 2 * Math.PI);
             ctx.fill();
+
+            if (entity.emote) {
+                ctx.font = '14px Arial';
+                ctx.fillStyle = 'black';
+                ctx.fillText(entity.emote, entity.position.x + 8, entity.position.y - 8);
+            }
         }
 
         function gameLoop() {
@@ -348,6 +472,7 @@ function renderLegend() {
 
             entities.forEach(entity => {
                 entity.move();
+                entity.detectCollision();
 
                 if (entity.checkCollision() && !winnerDeclared) {
                     winnerDeclared = true;
@@ -365,8 +490,8 @@ function renderLegend() {
                 ctx.fillStyle = 'black';
                 ctx.font = '10px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(users[entity.userId].name, entity.position.x, entity.position.y - 10);
-                ctx.fillText(`${entity.direction}`, entity.position.x, entity.position.y + 10);
+                ctx.fillText(users[entity.userId].name, entity.position.x, entity.position.y + 10);
+                //ctx.fillText(`${entity.direction}`, entity.position.x, entity.position.y - 10);
             });
 
             if (closestEntity) {
