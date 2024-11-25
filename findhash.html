@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA-256 Brute Force</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SHA-256 Brute Force</h1>
+    <p>Target Hash: <span id="target-hash">5d3b9cc2d9ff834ecca6476739bdaee874aba50d9e175e939789f50abcc8ea36</span></p>
+    <button id="start-btn">Start Brute Force</button>
+    <div id="output"></div>
+
+    <script>
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        const targetHash = "5d3b9cc2d9ff834ecca6476739bdaee874aba50d9e175e939789f50abcc8ea36";
+        const length = 24;
+        const chunkSize = 1000; // Number of combinations to process per iteration
+        const maxLogEntries = 5; // Keep only the most recent 5 log entries
+        const outputDiv = document.getElementById("output");
+        const startBtn = document.getElementById("start-btn");
+        let logEntries = []; // Array to store log entries
+
+        function sha256(message) {
+            // Returns a Promise that resolves to the SHA-256 hash of the given message
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            return crypto.subtle.digest("SHA-256", data).then(buffer => {
+                const hashArray = Array.from(new Uint8Array(buffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            });
+        }
+
+        async function bruteForceChunk(startIndex) {
+            let currentIndex = startIndex;
+
+            for (let i = 0; i < chunkSize; i++) {
+                // Generate the candidate string based on the current index
+                let candidate = "";
+                let tempIndex = currentIndex;
+                for (let j = 0; j < length; j++) {
+                    candidate = charset[tempIndex % charset.length] + candidate;
+                    tempIndex = Math.floor(tempIndex / charset.length);
+                }
+
+                // Hash the candidate and compare
+                const candidateHash = await sha256(candidate);
+                logOutput(`Trying: ${candidate} -> ${candidateHash}`);
+
+                if (candidateHash === targetHash) {
+                    logOutput(`Match found! The string is: ${candidate}`);
+                    return true; // Stop the process if a match is found
+                }
+
+                currentIndex++;
+            }
+
+            return currentIndex; // Return the next starting index for the next chunk
+        }
+
+        function logOutput(message) {
+            logEntries.push(message);
+
+            // Auto-clear old log entries if they exceed maxLogEntries
+            if (logEntries.length > maxLogEntries) {
+                logEntries.shift(); // Remove the oldest log entry
+            }
+
+            // Update the output div with the remaining log entries
+            outputDiv.textContent = logEntries.join("\n");
+            outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to the bottom
+        }
+
+        async function bruteForce() {
+            startBtn.disabled = true;
+            logOutput("Starting brute force...");
+
+            let startIndex = 0;
+            while (true) {
+                const nextIndex = await bruteForceChunk(startIndex);
+                if (nextIndex === true) break; // Match found, stop the loop
+                startIndex = nextIndex;
+
+                // Allow the browser to handle other tasks
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+
+            startBtn.disabled = false;
+            logOutput("Brute force complete.");
+        }
+
+        startBtn.addEventListener("click", bruteForce);
+    </script>
+</body>
+</html>
