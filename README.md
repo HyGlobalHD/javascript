@@ -19,3 +19,4 @@ Terrain gen note: the larger the size, the more lag it is.
 - [random string](https://hyglobalhd.github.io/javascript/randomstring.html) : just a random string with the length of 128, which are taken from random.org, refresh if you wanted a new string
 - [Random Movement](https://hyglobalhd.github.io/javascript/randomMovement.html) : A simulation using data from randomORG to simulate the outcomes of an object movements.
 - [Find HASH](https://hyglobalhd.github.io/javascript/findhash.html)
+- [Find Random HASH](https://hyglobalhd.github.io/javascript/randomFindHash.html)
