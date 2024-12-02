@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHA-256 Brute Force</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -82,7 +83,7 @@
 
 <script>
     const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let targetHash = "98e3563cd97ec8dedd24530909f540fc73878cba10ad60cbd57992d3f32e3885";
+    let targetHash = "0fad2932464a554f7a2d07fd87a44a2686dc65c7e6dd87f911707e8a33b4529e";
     let length = 24;
     const chunkSize = 1000;
     const maxLogEntries = 5;
@@ -108,13 +109,8 @@
         totalCombinationsDisplay.textContent = totalCombinations.toLocaleString();
     }
 
-    async function sha256(message) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(message);
-        return crypto.subtle.digest("SHA-256", data).then((buffer) => {
-            const hashArray = Array.from(new Uint8Array(buffer));
-            return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-        });
+    function sha256(message) {
+        return CryptoJS.SHA256(message).toString(CryptoJS.enc.Hex);
     }
 
     function generateRandomString(length) {
@@ -126,45 +122,48 @@
         return randomString;
     }
 
-    async function fetchRandomString() {
-            return generateRandomString(length); // Fallback to local generation
-    }
+   async function bruteForceChunk() {
+    for (let i = 0; i < chunkSize; i++) {
+        if (!running) return false;
 
-    async function bruteForceChunk() {
-        for (let i = 0; i < chunkSize; i++) {
-            if (!running) return false;
-
-            const candidate = generateRandomString(length);
-            if (triedCombinations.size >= maxSetSize) {
-                triedCombinations = new Set(); // Reset the set if max size is reached
-            }
-
-            if (triedCombinations.has(candidate)) {
-                continue;
-            }
-            triedCombinations.add(candidate);
-
-            const candidateHash = await sha256(candidate);
-            combinationsTried++;
-            updateStats();
-
-            logCount++;
-            outputDiv.textContent += `Trying: ${candidate} -> ${candidateHash}\n`;
-            outputDiv.scrollTop = outputDiv.scrollHeight;
-
-            if (logCount >= maxLogEntries) {
-                outputDiv.textContent = ""; // Clear the output every 5 entries
-                logCount = 0;
-            }
-
-            if (candidateHash === targetHash) {
-                outputDiv.textContent += `Match found! The string is: ${candidate}\n`;
-                outputDiv.scrollTop = outputDiv.scrollHeight;
-                return true;
-            }
+        const candidate = generateRandomString(length);
+        if (triedCombinations.size >= maxSetSize) {
+            triedCombinations = new Set(); // Reset the set if max size is reached
         }
-        return false;
+
+        if (triedCombinations.has(candidate)) {
+            continue;
+        }
+        triedCombinations.add(candidate);
+
+        const candidateHash = sha256(candidate);
+        combinationsTried++;
+        updateStats();
+
+        // Append log to outputDiv
+        const logEntry = `Trying: ${candidate} -> ${candidateHash}\n`;
+        outputDiv.textContent += logEntry;
+
+        // Scroll to bottom of outputDiv
+        outputDiv.scrollTop = outputDiv.scrollHeight;
+
+        // Manage log overflow
+        logCount++;
+        if (logCount >= maxLogEntries) {
+            const logs = outputDiv.textContent.split("\n");
+            outputDiv.textContent = logs.slice(-maxLogEntries).join("\n");
+            logCount = outputDiv.textContent.split("\n").length; // Update logCount
+        }
+
+        if (candidateHash === targetHash) {
+            outputDiv.textContent += `Match found! The string is: ${candidate}\n`;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+            return true;
+        }
     }
+    return false;
+}
+
 
     function updateStats() {
         combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
@@ -179,38 +178,6 @@
 
         running = true;
         outputDiv.textContent += "Starting brute force...\n";
-
-        setInterval(async () => {
-            if (running) {
-                const randomCandidate = await fetchRandomString();
-                if (triedCombinations.size >= maxSetSize) {
-                    triedCombinations = new Set(); // Reset the set if max size is reached
-                }
-
-                if (!triedCombinations.has(randomCandidate)) {
-                    triedCombinations.add(randomCandidate);
-                    const randomHash = await sha256(randomCandidate);
-                    combinationsTried++;
-                    updateStats();
-
-                    logCount++;
-                    outputDiv.textContent += `From API: ${randomCandidate} -> ${randomHash}\n`;
-                    outputDiv.scrollTop = outputDiv.scrollHeight;
-
-                    if (logCount >= maxLogEntries) {
-                        outputDiv.textContent = ""; // Clear the output every 5 entries
-                        logCount = 0;
-                    }
-
-                    if (randomHash === targetHash) {
-                        outputDiv.textContent += `Match found via API! The string is: ${randomCandidate}\n`;
-                        outputDiv.scrollTop = outputDiv.scrollHeight;
-                        running = false;
-                        return;
-                    }
-                }
-            }
-        }, 5000);
 
         while (running) {
             const found = await bruteForceChunk();
@@ -243,15 +210,27 @@
     }
 
     startBtn.addEventListener("click", () => {
-        targetHash = targetHashInput.value;
-        length = parseInt(combinationLengthInput.value, 10);
-        updateTotalCombinations();
-        bruteForce();
-    });
+    // Update targetHash and length from user input
+    targetHash = targetHashInput.value.trim(); // Trim spaces for safety
+    length = parseInt(combinationLengthInput.value, 10);
+    
+    if (!targetHash || targetHash.length !== 64) {
+        outputDiv.textContent += "Invalid target hash. Please enter a valid 64-character SHA-256 hash.\n";
+        return;
+    }
+
+    updateTotalCombinations(); // Update total combinations based on new length
+    combinationsTried = 0; // Reset the counter for combinations tried
+    triedCombinations.clear(); // Clear the tried combinations set
+    outputDiv.textContent = ""; // Clear the output log
+    bruteForce(); // Start brute force
+});
+
 
     pauseBtn.addEventListener("click", pauseBruteForce);
     resumeBtn.addEventListener("click", resumeBruteForce);
 </script>
+
 
 </body>
 </html>
