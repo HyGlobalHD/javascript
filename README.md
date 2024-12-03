@@ -20,3 +20,4 @@ Terrain gen note: the larger the size, the more lag it is.
 - [Random Movement](https://hyglobalhd.github.io/javascript/randomMovement.html) : A simulation using data from randomORG to simulate the outcomes of an object movements.
 - [Find HASH](https://hyglobalhd.github.io/javascript/findhash.html)
 - [Find Random HASH](https://hyglobalhd.github.io/javascript/randomFindHash.html)
+- [Find Random HASH using webworker](https://hyglobalhd.github.io/javascript/webworker/findRandomHashWorker.html)
