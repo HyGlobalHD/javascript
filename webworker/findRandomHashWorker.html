@@ -62,11 +62,15 @@
         Combination Length:
         <input type="number" id="combination-length" value="24" min="1">
     </label>
+    <br>
+    <label>
+        Web Workers (1-5):
+        <input type="number" id="worker-count" value="4" min="1" max="5">
+    </label>
     <p>Total Combinations: <span id="total-combinations"></span></p>
     <p>Combinations Tried: <span id="combinations-tried">0</span></p>
-    <p>Workers Used: <span id="workers-used"></span></p>
-    <p>Estimated Time Remaining: </p>
-    <p><span id="estimated-time">Calculating...</span></p>
+    <p>Workers Used: <span id="workers-used">4</span></p>
+    <p>Estimated Time Remaining: <span id="estimated-time">Calculating...</span></p>
     <div id="progress-bar-container">
         <div id="progress-bar"></div>
     </div>
@@ -81,6 +85,7 @@
         const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
         let totalCombinations = BigInt(0);
         let combinationsTried = 0;
+        let combinationsPerSecond = 0;
         let running = false;
 
         const totalCombinationsDisplay = document.getElementById("total-combinations");
@@ -92,15 +97,20 @@
         const resumeBtn = document.getElementById("resume-btn");
         const targetHashInput = document.getElementById("target-hash");
         const combinationLengthInput = document.getElementById("combination-length");
+        const workerCountInput = document.getElementById("worker-count");
         const workersUsedDisplay = document.getElementById("workers-used");
         const estimatedTimeDisplay = document.getElementById("estimated-time");
 
         let workers = [];
+        let numWorkers = parseInt(workerCountInput.value, 10);
+
+        workerCountInput.addEventListener("change", () => {
+            numWorkers = Math.max(1, Math.min(5, parseInt(workerCountInput.value, 10))); // Clamp between 1 and 5
+            workersUsedDisplay.textContent = numWorkers;
+        });
+
         let lastCheckedTime = Date.now();
         let lastCheckedCombinations = 0;
-
-        const numWorkers = navigator.hardwareConcurrency || 4;
-        workersUsedDisplay.textContent = numWorkers;
 
         function updateTotalCombinations(length) {
             totalCombinations = BigInt(charset.length) ** BigInt(length);
@@ -112,14 +122,12 @@
             const progress = (combinationsTried / Number(totalCombinations)) * 100;
             progressBar.style.width = `${progress.toFixed(2)}%`;
 
-            // Calculate combinations per second
             const now = Date.now();
             const deltaTime = (now - lastCheckedTime) / 1000;
             combinationsPerSecond = (combinationsTried - lastCheckedCombinations) / deltaTime;
             lastCheckedTime = now;
             lastCheckedCombinations = combinationsTried;
 
-            // Calculate estimated time
             if (combinationsPerSecond > 0) {
                 const remainingCombinations = Number(totalCombinations) - combinationsTried;
                 const remainingTimeInSeconds = remainingCombinations / combinationsPerSecond;
@@ -158,8 +166,8 @@
         }
 
         function logMessage(message) {
-            const logs = outputDiv.textContent.split("\n").filter(line => line.trim() !== ""); // Clean existing logs
-            if (logs.length >= 10) logs.shift(); // Keep the last 10 entries
+            const logs = outputDiv.textContent.split("\n").filter(line => line.trim() !== "");
+            if (logs.length >= 10) logs.shift();
             logs.push(message);
             outputDiv.textContent = logs.join("\n");
             outputDiv.scrollTop = outputDiv.scrollHeight;
