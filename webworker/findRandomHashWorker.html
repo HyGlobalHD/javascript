@@ -117,24 +117,26 @@
             totalCombinationsDisplay.textContent = totalCombinations.toLocaleString();
         }
 
+  let throttleUpdateStatsTimeout;
+        
         function updateStats() {
-            combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
-            const progress = (combinationsTried / Number(totalCombinations)) * 100;
-            progressBar.style.width = `${progress.toFixed(2)}%`;
+      clearTimeout(throttleUpdateStatsTimeout);
+      throttleUpdateStatsTimeout = setTimeout(() => {
+          combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
+          const progress = (combinationsTried / Number(totalCombinations)) * 100;
+          progressBar.style.width = `${progress.toFixed(2)}%`;
+          const elapsedTime = (Date.now() - startTime) / 1000; // Use Start time to track.
+          combinationsPerSecond = combinationsTried/ elapsedTime; //Calculate using start time.
 
-            const now = Date.now();
-            const deltaTime = (now - lastCheckedTime) / 1000;
-            combinationsPerSecond = (combinationsTried - lastCheckedCombinations) / deltaTime;
-            lastCheckedTime = now;
-            lastCheckedCombinations = combinationsTried;
+          if (combinationsPerSecond > 0) {
+              const remainingCombinations = Number(totalCombinations) - combinationsTried;
+              const remainingTimeInSeconds = remainingCombinations / combinationsPerSecond;
+              estimatedTimeDisplay.textContent = formatTime(remainingTimeInSeconds);
+          } else {
+              estimatedTimeDisplay.textContent = "Calculating...";
+          }
 
-            if (combinationsPerSecond > 0) {
-                const remainingCombinations = Number(totalCombinations) - combinationsTried;
-                const remainingTimeInSeconds = remainingCombinations / combinationsPerSecond;
-                estimatedTimeDisplay.textContent = formatTime(remainingTimeInSeconds);
-            } else {
-                estimatedTimeDisplay.textContent = "Calculating...";
-            }
+      }, 200); // Update stats every 500ms
         }
 
         function formatTime(seconds) {
@@ -174,6 +176,7 @@
         }
 
 let paused = false;
+    let startTime; //Variable for timing estimation
 
 function startBruteForce() {
     const targetHash = targetHashInput.value.trim();
@@ -188,6 +191,7 @@ function startBruteForce() {
         combinationsTried = 0; // Only reset if not resuming
         updateTotalCombinations(length);
         outputDiv.textContent = "";
+        startTime = Date.now();// Initialize Start time
     }
 
     running = true;
@@ -196,18 +200,20 @@ function startBruteForce() {
     resumeBtn.disabled = true;
     startBtn.disabled = true;
 
+    const combinationsPerWorker = Math.ceil(Number(totalCombinations) / numWorkers);
     // Start or resume workers
     for (let i = workers.length; i < numWorkers; i++) {
         const worker = new Worker("worker.js");
 
         // Send initialization data or resumption data
-        worker.postMessage({
-            targetHash,
-            charset,
-            length,
-            workerId: i + 1,
-            startFrom: paused ? combinationsTried : 0, // Resume from previous progress
-        });
+            worker.postMessage({
+                targetHash,
+                charset,
+                length,
+                workerId: i + 1,
+                startFrom: combinationsPerWorker * i , // more accurate start calculation.
+                combinationsPerWorker: combinationsPerWorker
+            });
 
         // Handle messages from the worker
         worker.onmessage = (e) => {
