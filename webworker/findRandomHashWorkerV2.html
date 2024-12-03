@@ -145,7 +145,7 @@
             pauseBtn.disabled = false;
             resumeBtn.disabled = true;
 
-            const workPerWorker = Math.floor(totalCombinations / numWorkers);
+            const workPerWorker = Number(totalCombinations / BigInt(numWorkers)); // Corrected line
 
             for (let i = 0; i < numWorkers; i++) {
                 const worker = new Worker("workerv2.js");
