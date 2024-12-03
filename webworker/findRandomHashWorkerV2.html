@@ -111,10 +111,10 @@
             totalCombinationsDisplay.textContent = totalCombinations.toLocaleString();
         }
 
-        function updateStats() {
+        function updateStats() {    
             combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
-            const progress = (combinationsTried / Number(totalCombinations)) * 100;
-            progressBar.style.width = `${progress.toFixed(2)}%`;
+            const progress = (BigInt(combinationsTried) / totalCombinations) * 100n; // Use BigInt division
+            progressBar.style.width = `${(Number(progress) / 100n).toFixed(2)}%`; //Convert back to Number for display
         }
 
         function logMessage(message) {
