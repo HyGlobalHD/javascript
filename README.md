@@ -21,3 +21,4 @@ Terrain gen note: the larger the size, the more lag it is.
 - [Find HASH](https://hyglobalhd.github.io/javascript/findhash.html)
 - [Find Random HASH](https://hyglobalhd.github.io/javascript/randomFindHash.html)
 - [Find Random HASH using webworker](https://hyglobalhd.github.io/javascript/webworker/findRandomHashWorker.html)
+- [Find Random HASH using webworker V2](https://hyglobalhd.github.io/javascript/webworker/findRandomHashWorkerV2.html)
