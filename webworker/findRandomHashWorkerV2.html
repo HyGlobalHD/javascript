@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA-256 Brute Force with Web Workers</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        #output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #333;
+            padding: 10px;
+            background-color: #1e1e1e;
+        }
+        #progress-bar-container {
+            margin-top: 20px;
+            width: 100%;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #4caf50;
+            transition: width 0.1s ease;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>SHA-256 Brute Force</h1>
+    <label>
+        Target Hash:
+        <input type="text" id="target-hash" placeholder="Enter target hash" value="0fad2932464a554f7a2d07fd87a44a2686dc65c7e6dd87f911707e8a33b4529e">
+    </label>
+    <br>
+    <label>
+        Combination Length:
+        <input type="number" id="combination-length" value="24" min="1">
+    </label>
+    <br>
+    <label>
+        Web Workers (1-5):
+        <input type="number" id="worker-count" value="4" min="1" max="5">
+    </label>
+    <p>Total Combinations: <span id="total-combinations"></span></p>
+    <p>Combinations Tried: <span id="combinations-tried">0</span></p>
+    <p>Workers Used: <span id="workers-used">4</span></p>
+    <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+    </div>
+    <div>
+        <button id="start-btn">Start Brute Force</button>
+        <button id="pause-btn" disabled>Pause</button>
+        <button id="resume-btn" disabled>Resume</button>
+    </div>
+    <div id="output"></div>
+
+    <script>
+        const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+        let totalCombinations = BigInt(0);
+        let combinationsTried = 0;
+        let paused = false;
+
+        const totalCombinationsDisplay = document.getElementById("total-combinations");
+        const combinationsTriedDisplay = document.getElementById("combinations-tried");
+        const progressBar = document.getElementById("progress-bar");
+        const outputDiv = document.getElementById("output");
+        const startBtn = document.getElementById("start-btn");
+        const pauseBtn = document.getElementById("pause-btn");
+        const resumeBtn = document.getElementById("resume-btn");
+        const targetHashInput = document.getElementById("target-hash");
+        const combinationLengthInput = document.getElementById("combination-length");
+        const workerCountInput = document.getElementById("worker-count");
+        const workersUsedDisplay = document.getElementById("workers-used");
+
+        let workers = [];
+        let numWorkers = parseInt(workerCountInput.value, 10);
+
+        workerCountInput.addEventListener("change", () => {
+            numWorkers = Math.max(1, Math.min(5, parseInt(workerCountInput.value, 10)));
+            workersUsedDisplay.textContent = numWorkers;
+        });
+
+        function updateTotalCombinations(length) {
+            totalCombinations = BigInt(charset.length) ** BigInt(length);
+            totalCombinationsDisplay.textContent = totalCombinations.toLocaleString();
+        }
+
+        function updateStats() {
+            combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
+            const progress = (combinationsTried / Number(totalCombinations)) * 100;
+            progressBar.style.width = `${progress.toFixed(2)}%`;
+        }
+
+        function logMessage(message) {
+            const logs = outputDiv.textContent.split("\n").filter(line => line.trim() !== "");
+            if (logs.length >= 10) logs.shift();
+            logs.push(message);
+            outputDiv.textContent = logs.join("\n");
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        function startBruteForce() {
+            const targetHash = targetHashInput.value.trim();
+            const length = parseInt(combinationLengthInput.value, 10);
+            numWorkers = Math.max(1, Math.min(5, parseInt(workerCountInput.value, 10)));
+            workersUsedDisplay.textContent = numWorkers;
+
+            if (!targetHash || targetHash.length !== 64) {
+                logMessage("Invalid target hash. Please enter a valid 64-character SHA-256 hash.");
+                return;
+            }
+
+            combinationsTried = 0;
+            updateTotalCombinations(length);
+            outputDiv.textContent = "";
+            paused = false;
+
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            resumeBtn.disabled = true;
+
+            const workPerWorker = Math.floor(totalCombinations / numWorkers);
+
+            for (let i = 0; i < numWorkers; i++) {
+                const worker = new Worker("workerv2.js");
+                const startFrom = i * workPerWorker;
+                worker.postMessage({
+                    targetHash,
+                    charset,
+                    length,
+                    workerId: i + 1,
+                    startFrom,
+                    workPerWorker,
+                });
+
+                worker.onmessage = (e) => {
+                    const { combinations, found, candidate, combinationString, workerId, hashedString } = e.data;
+
+                    combinationsTried += combinations;
+                    updateStats();
+                    logMessage(`Worker ${workerId}: Tried ${combinationString} --> ${hashedString}`);
+
+                    if (found) {
+                        logMessage(`Worker ${workerId} found the match! The string is: ${candidate}`);
+                        alert(`Match found! The string is: ${candidate}`);
+                        terminateAllWorkers();
+                        pauseBtn.disabled = true;
+                        resumeBtn.disabled = true;
+                        startBtn.disabled = false;
+                        return;
+                    }
+                    if(paused) {
+                        worker.terminate();
+                    }
+                };
+                workers.push(worker);
+            }
+        }
+
+        function pauseBruteForce() {
+            paused = true;
+            pauseBtn.disabled = true;
+            resumeBtn.disabled = false;
+            logMessage("Brute force paused.");
+        }
+
+
+        function resumeBruteForce() {
+            paused = false;
+            pauseBtn.disabled = false;
+            resumeBtn.disabled = true;
+            startBruteForce();
+        }
+
+        function terminateAllWorkers() {
+            workers.forEach((worker) => worker.terminate());
+            workers = [];
+        }
+
+        startBtn.addEventListener("click", startBruteForce);
+        pauseBtn.addEventListener("click", pauseBruteForce);
+        resumeBtn.addEventListener("click", resumeBruteForce);
+    </script>
+</body>
+</html>
