@@ -148,7 +148,7 @@
             const workPerWorker = Math.floor(totalCombinations / numWorkers);
 
             for (let i = 0; i < numWorkers; i++) {
-                const worker = new Worker("worker.js");
+                const worker = new Worker("workerv2.js");
                 const startFrom = i * workPerWorker;
                 worker.postMessage({
                     targetHash,
