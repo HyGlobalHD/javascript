@@ -81,122 +81,123 @@
     <div id="output"></div>
 
     <script>
-        const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
-        let totalCombinations = BigInt(0);
-        let combinationsTried = 0;
+const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+let totalCombinations = BigInt(0);
+let combinationsTried = 0;
+let globalBloomFilter = new Set(); // Temporary tracking of used combinations
+let bloomMaxSize = 500000; // Threshold for the Bloom filter size
+let workers = [];
+let numWorkers = 0;
 
-        const totalCombinationsDisplay = document.getElementById("total-combinations");
-        const combinationsTriedDisplay = document.getElementById("combinations-tried");
-        const progressBar = document.getElementById("progress-bar");
-        const outputDiv = document.getElementById("output");
-        const startBtn = document.getElementById("start-btn");
-        const pauseBtn = document.getElementById("pause-btn");
-        const resumeBtn = document.getElementById("resume-btn");
-        const targetHashInput = document.getElementById("target-hash");
-        const combinationLengthInput = document.getElementById("combination-length");
-        const workerCountInput = document.getElementById("worker-count");
-        const workersUsedDisplay = document.getElementById("workers-used");
+const totalCombinationsDisplay = document.getElementById("total-combinations");
+const combinationsTriedDisplay = document.getElementById("combinations-tried");
+const progressBar = document.getElementById("progress-bar");
+const outputDiv = document.getElementById("output");
+const startBtn = document.getElementById("start-btn");
+const pauseBtn = document.getElementById("pause-btn");
+const resumeBtn = document.getElementById("resume-btn");
+const targetHashInput = document.getElementById("target-hash");
+const combinationLengthInput = document.getElementById("combination-length");
+const workerCountInput = document.getElementById("worker-count");
 
-        let workers = [];
-        let numWorkers = parseInt(workerCountInput.value, 10);
+function updateTotalCombinations(length) {
+    totalCombinations = BigInt(charset.length) ** BigInt(length);
+    totalCombinationsDisplay.textContent = totalCombinations.toLocaleString();
+}
 
-        workerCountInput.addEventListener("change", () => {
-            numWorkers = Math.max(1, Math.min(5, parseInt(workerCountInput.value, 10))); // Clamp between 1 and 5
-            workersUsedDisplay.textContent = numWorkers;
+function updateStats() {
+    combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
+    const progress = (combinationsTried / Number(totalCombinations)) * 100;
+    progressBar.style.width = `${progress.toFixed(2)}%`;
+}
+
+function logMessage(message) {
+    const logs = outputDiv.textContent.split("\n").filter(line => line.trim() !== "");
+    if (logs.length >= 10) logs.shift();
+    logs.push(message);
+    outputDiv.textContent = logs.join("\n");
+    outputDiv.scrollTop = outputDiv.scrollHeight;
+}
+
+function handleWorkerMessage(e) {
+    const { combinations, found, candidate, combinationString, workerId, hashedString } = e.data;
+
+    combinationsTried += combinations;
+    updateStats();
+
+    logMessage(`Worker ${workerId}: Tried ${combinationString} --> ${hashedString}`);
+
+    if (found) {
+        logMessage(`Worker ${workerId} found the match! The string is: ${candidate}`);
+        alert(`Match found! The string is: ${candidate}`);
+        terminateAllWorkers();
+        pauseBtn.disabled = true;
+        resumeBtn.disabled = true;
+        startBtn.disabled = false;
+        return;
+    }
+}
+
+function terminateAllWorkers() {
+    workers.forEach(worker => worker.terminate());
+    workers = [];
+}
+
+function manageBloomFilter(candidate) {
+    if (globalBloomFilter.size >= bloomMaxSize) {
+        globalBloomFilter = new Set(); // Reset and re-sync
+    }
+    return globalBloomFilter.has(candidate) ? true : (globalBloomFilter.add(candidate), false);
+}
+
+function startBruteForce() {
+    const targetHash = targetHashInput.value.trim();
+    const length = parseInt(combinationLengthInput.value, 10);
+
+    if (!targetHash || targetHash.length !== 64) {
+        logMessage("Invalid target hash. Please enter a valid 64-character SHA-256 hash.");
+        return;
+    }
+
+    numWorkers = Math.min(Math.max(1, parseInt(workerCountInput.value, 10)), 5);
+    combinationsTried = 0;
+    updateTotalCombinations(length);
+    outputDiv.textContent = "";
+    globalBloomFilter.clear(); // Reset bloom filter
+
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+    resumeBtn.disabled = true;
+
+    for (let i = 0; i < numWorkers; i++) {
+        const worker = new Worker("worker.js");
+        worker.postMessage({
+            targetHash,
+            charset,
+            length,
+            workerId: i + 1,
         });
 
-        function updateTotalCombinations(length) {
-            totalCombinations = BigInt(charset.length) ** BigInt(length);
-            totalCombinationsDisplay.textContent = totalCombinations.toLocaleString();
-        }
+        worker.onmessage = handleWorkerMessage;
+        workers.push(worker);
+    }
+}
 
-        function updateStats() {
-            combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
-            const progress = (combinationsTried / Number(totalCombinations)) * 100;
-            progressBar.style.width = `${progress.toFixed(2)}%`;
-        }
+function pauseBruteForce() {
+    terminateAllWorkers();
+    pauseBtn.disabled = true;
+    resumeBtn.disabled = false;
+    logMessage("Brute force paused.");
+}
 
-        function logMessage(message) {
-            const logs = outputDiv.textContent.split("\n").filter(line => line.trim() !== "");
-            if (logs.length >= 10) logs.shift();
-            logs.push(message);
-            outputDiv.textContent = logs.join("\n");
-            outputDiv.scrollTop = outputDiv.scrollHeight;
-        }
+function resumeBruteForce() {
+    startBruteForce();
+}
 
-        function startBruteForce() {
-            const targetHash = targetHashInput.value.trim();
-            const length = parseInt(combinationLengthInput.value, 10);
+startBtn.addEventListener("click", startBruteForce);
+pauseBtn.addEventListener("click", pauseBruteForce);
+resumeBtn.addEventListener("click", resumeBruteForce);
 
-            if (!targetHash || targetHash.length !== 64) {
-                logMessage("Invalid target hash. Please enter a valid 64-character SHA-256 hash.");
-                return;
-            }
-
-            combinationsTried = 0;
-            updateTotalCombinations(length);
-            outputDiv.textContent = "";
-
-            startBtn.disabled = true;
-            pauseBtn.disabled = false;
-            resumeBtn.disabled = true;
-
-            for (let i = workers.length; i < numWorkers; i++) {
-                const worker = new Worker("worker.js");
-                worker.postMessage({
-                    targetHash,
-                    charset,
-                    length,
-                    workerId: i + 1,
-                    startFrom: 0,
-                });
-
-                worker.onmessage = (e) => {
-                    const { combinations, found, candidate, combinationString, workerId, hashedString } = e.data;
-
-                    combinationsTried += combinations;
-                    updateStats();
-
-                    logMessage(`Worker ${workerId}: Tried ${combinationString} --> ${hashedString}`);
-
-                    if (found) {
-                        logMessage(`Worker ${workerId} found the match! The string is: ${candidate}`);
-                        alert(`Match found! The string is: ${candidate}`);
-                        terminateAllWorkers();
-                        pauseBtn.disabled = true;
-                        resumeBtn.disabled = true;
-                        startBtn.disabled = false;
-                        return;
-                    }
-                };
-
-                workers.push(worker);
-            }
-        }
-
-        function pauseBruteForce() {
-            pauseBtn.disabled = true;
-            resumeBtn.disabled = false;
-
-            workers.forEach((worker) => worker.terminate());
-            workers = [];
-            logMessage("Brute force paused.");
-        }
-
-        function resumeBruteForce() {
-            pauseBtn.disabled = false;
-            resumeBtn.disabled = true;
-            startBruteForce();
-        }
-
-        function terminateAllWorkers() {
-            workers.forEach((worker) => worker.terminate());
-            workers = [];
-        }
-
-        startBtn.addEventListener("click", startBruteForce);
-        pauseBtn.addEventListener("click", pauseBruteForce);
-        resumeBtn.addEventListener("click", resumeBruteForce);
     </script>
 </body>
 </html>
