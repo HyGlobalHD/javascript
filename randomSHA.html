@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA-256 Brute Force</title>
+</head>
+<body>
+    <h1>SHA-256 Brute Force</h1>
+    <p id="status">Status: Waiting...</p>
+    <p id="result">Result: None</p>
+
+    <script>
+        const targetHash = "513d246e0efb088ade89714bf68279b8ac0eb5452be47a3d55efc081b3df74fa";
+        const randomOrgUrl = "https://www.random.org/strings/?num=10000&len=24&digits=on&loweralpha=on&unique=off&format=plain&rnd=new";
+
+        async function fetchStringsAndCheckHash() {
+            let attempt = 0;
+            while (true) {
+                attempt++;
+                document.getElementById("status").textContent = `Status: Fetching strings (Attempt ${attempt})...`;
+
+                try {
+                    const response = await fetch(randomOrgUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.text();
+                    const strings = data.split('\n').filter(line => line.trim().length === 24);
+
+                    document.getElementById("status").textContent = `Status: Checking hashes (Attempt ${attempt})...`;
+                    for (const str of strings) {
+                        const hash = await sha256(str);
+                        if (hash === targetHash) {
+                            document.getElementById("status").textContent = "Status: Match found!";
+                            document.getElementById("result").textContent = `Result: Matching string is '${str}'`;
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    document.getElementById("status").textContent = `Error: ${error.message}`;
+                }
+            }
+        }
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        fetchStringsAndCheckHash();
+    </script>
+</body>
+</html>
