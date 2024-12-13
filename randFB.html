@@ -64,172 +64,154 @@
     </div>
     <div id="output"></div>
 
-    <script type="module">
-        // Import Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+<script type="module">
+    // Import the Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDK9UIDrsk4N0Fy0h4HHZBq6D3jjsoH1ow",
-            authDomain: "sha256-db.firebaseapp.com",
-            projectId: "sha256-db",
-            storageBucket: "sha256-db.firebasestorage.app",
-            messagingSenderId: "253461252485",
-            appId: "1:253461252485:web:0bf310b4774957ce875cec"
-        };
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDK9UIDrsk4N0Fy0h4HHZBq6D3jjsoH1ow",
+        authDomain: "sha256-db.firebaseapp.com",
+        projectId: "sha256-db",
+        storageBucket: "sha256-db.appspot.com",
+        messagingSenderId: "253461252485",
+        appId: "1:253461252485:web:0bf310b4774957ce875cec",
+    };
 
-        // Initialize Firebase and Firestore
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    // Initialize Firebase and Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const combinationsRef = collection(db, "combinations");
 
-        // DOM elements
-        const targetHashInput = document.getElementById("target-hash");
-        const combinationLengthInput = document.getElementById("combination-length");
-        const combinationsTriedDisplay = document.getElementById("combinations-tried");
-        const outputDiv = document.getElementById("output");
-        const startBtn = document.getElementById("start-btn");
-        const pauseBtn = document.getElementById("pause-btn");
-        const resumeBtn = document.getElementById("resume-btn");
+    const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+    const chunkSize = 100;
+    const maxLogEntries = 5;
 
-        // Global variables
-        const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
-        let targetHash = "";
-        let length = 24;
-        let running = false;
-        let combinationsTried = 0;
-        let logCount = 0;
-        const maxLogEntries = 5;
-        const batchSize = 500; // Firestore free-tier rate consideration
-        let batchBuffer = [];
+    const combinationsTriedDisplay = document.getElementById("combinations-tried");
+    const outputDiv = document.getElementById("output");
+    const startBtn = document.getElementById("start-btn");
+    const pauseBtn = document.getElementById("pause-btn");
+    const resumeBtn = document.getElementById("resume-btn");
+    const targetHashInput = document.getElementById("target-hash");
+    const combinationLengthInput = document.getElementById("combination-length");
 
-        // SHA-256 hashing function
-        async function sha256(message) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(message);
-            const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-            return Array.from(new Uint8Array(hashBuffer))
-                .map((b) => b.toString(16).padStart(2, "0"))
-                .join("");
+    let combinationsTried = 0;
+    let running = false;
+
+    async function sha256(message) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(message);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        return Array.from(new Uint8Array(hashBuffer))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+    }
+
+    function generateRandomString(length) {
+        let result = "";
+        for (let i = 0; i < length; i++) {
+            result += charset.charAt(Math.floor(Math.random() * charset.length));
         }
+        return result;
+    }
 
-        // Generate a random string
-        function generateRandomString(length) {
-            let result = "";
-            for (let i = 0; i < length; i++) {
-                result += charset.charAt(Math.floor(Math.random() * charset.length));
+    async function storeBatchToFirestore(batchData) {
+        const batch = writeBatch(db);
+        batchData.forEach(({ combination, hash }) => {
+            const newDocRef = doc(combinationsRef);
+            batch.set(newDocRef, { combination, hash });
+        });
+
+        try {
+            await batch.commit();
+        } catch (error) {
+            console.error("Error writing batch to Firestore: ", error);
+        }
+    }
+
+    async function bruteForceChunk() {
+        const batchData = [];
+        for (let i = 0; i < chunkSize; i++) {
+            if (!running) return false;
+
+            const candidate = generateRandomString(parseInt(combinationLengthInput.value, 10));
+            const candidateHash = await sha256(candidate);
+            combinationsTried++;
+            combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
+
+            batchData.push({ combination: candidate, hash: candidateHash });
+
+            const logEntry = `Trying: ${candidate} -> ${candidateHash}\n`;
+            outputDiv.textContent += logEntry;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+
+            if (batchData.length >= chunkSize) {
+                await storeBatchToFirestore(batchData);
+                batchData.length = 0;
             }
-            return result;
-        }
 
-        // Store batch to Firestore
-        async function storeBatchToFirestore() {
-            if (batchBuffer.length === 0) return;
-
-            const batch = writeBatch(db);
-            const combinationsRef = collection(db, "combinations");
-
-            batchBuffer.forEach(({ combination, hash }) => {
-                const docRef = combinationsRef.doc();
-                batch.set(docRef, {
-                    combination,
-                    hash,
-                    timestamp: serverTimestamp()
-                });
-            });
-
-            try {
-                await batch.commit();
-                console.log(`Stored ${batchBuffer.length} combinations to Firestore.`);
-                batchBuffer = [];
-            } catch (error) {
-                console.error("Error storing batch to Firestore:", error);
-            }
-        }
-
-        // Brute force logic
-        async function bruteForceChunk() {
-            for (let i = 0; i < 1000; i++) { // Smaller chunks for rate limits
-                if (!running) return;
-
-                const candidate = generateRandomString(length);
-                const candidateHash = await sha256(candidate);
-                combinationsTried++;
-                combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
-
-                batchBuffer.push({ combination: candidate, hash: candidateHash });
-
-                // Update UI log
-                const logEntry = `Trying: ${candidate} -> ${candidateHash}\n`;
-                outputDiv.textContent += logEntry;
+            if (candidateHash === targetHashInput.value.trim()) {
+                outputDiv.textContent += `Match found! The string is: ${candidate}\n`;
                 outputDiv.scrollTop = outputDiv.scrollHeight;
-
-                logCount++;
-                if (logCount > maxLogEntries) {
-                    const logs = outputDiv.textContent.split("\n");
-                    outputDiv.textContent = logs.slice(-maxLogEntries).join("\n");
-                    logCount = maxLogEntries;
-                }
-
-                if (candidateHash === targetHash) {
-                    outputDiv.textContent += `Match found! The string is: ${candidate}\n`;
-                    running = false;
-                    break;
-                }
-
-                // Store to Firestore in batches
-                if (batchBuffer.length >= batchSize) {
-                    await storeBatchToFirestore();
-                }
+                return true;
             }
         }
 
-        async function bruteForce() {
-            startBtn.disabled = true;
-            pauseBtn.disabled = false;
-
-            running = true;
-            outputDiv.textContent += "Starting brute force...\n";
-
-            while (running) {
-                await bruteForceChunk();
-                await new Promise((resolve) => setTimeout(resolve, 100)); // Delay to prevent rate limits
-            }
-
-            if (!running) {
-                outputDiv.textContent += "Brute force paused.\n";
-            } else {
-                await storeBatchToFirestore(); // Store remaining combinations
-                outputDiv.textContent += "Brute force complete.\n";
-            }
+        if (batchData.length > 0) {
+            await storeBatchToFirestore(batchData);
         }
 
-        // Event listeners
-        startBtn.addEventListener("click", () => {
-            targetHash = targetHashInput.value.trim();
-            length = parseInt(combinationLengthInput.value, 10);
+        return false;
+    }
 
-            if (!targetHash || targetHash.length !== 64) {
-                outputDiv.textContent += "Invalid target hash. Please enter a valid 64-character SHA-256 hash.\n";
-                return;
-            }
+    async function bruteForce() {
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        resumeBtn.disabled = true;
 
-            combinationsTried = 0;
-            outputDiv.textContent = "";
-            bruteForce();
-        });
+        running = true;
+        outputDiv.textContent += "Starting brute force...\n";
 
-        pauseBtn.addEventListener("click", () => {
-            running = false;
-            pauseBtn.disabled = true;
-            startBtn.disabled = false;
-        });
+        while (running) {
+            const found = await bruteForceChunk();
+            if (found) break;
+            await new Promise((resolve) => setTimeout(resolve, 100)); // Delay to avoid rate limits
+        }
 
-        resumeBtn.addEventListener("click", () => {
-            resumeBtn.disabled = true;
-            pauseBtn.disabled = false;
-            bruteForce();
-        });
-    </script>
+        if (!running) {
+            outputDiv.textContent += "Brute force paused.\n";
+            return;
+        }
+
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        outputDiv.textContent += "Brute force complete.\n";
+    }
+
+    function pauseBruteForce() {
+        running = false;
+        pauseBtn.disabled = true;
+        resumeBtn.disabled = false;
+    }
+
+    function resumeBruteForce() {
+        resumeBtn.disabled = true;
+        pauseBtn.disabled = false;
+
+        running = true;
+        bruteForce();
+    }
+
+    startBtn.addEventListener("click", () => {
+        combinationsTried = 0;
+        outputDiv.textContent = "";
+        bruteForce();
+    });
+
+    pauseBtn.addEventListener("click", pauseBruteForce);
+    resumeBtn.addEventListener("click", resumeBruteForce);
+</script>
+
 </body>
 </html>
