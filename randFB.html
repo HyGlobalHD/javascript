@@ -67,7 +67,7 @@
 <script type="module">
     // Import the Firebase modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, writeBatch, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
     // Firebase configuration
     const firebaseConfig = {
@@ -116,12 +116,28 @@
         return result;
     }
 
+    async function doesHashExist(hash) {
+        const querySnapshot = await getDocs(query(combinationsRef, where("hash", "==", hash)));
+        return !querySnapshot.empty;
+    }
+
+    async function doesCombinationExist(combination) {
+        const querySnapshot = await getDocs(query(combinationsRef, where("combination", "==", combination)));
+        return !querySnapshot.empty;
+    }
+
     async function storeBatchToFirestore(batchData) {
         const batch = writeBatch(db);
-        batchData.forEach(({ combination, hash }) => {
-            const newDocRef = doc(combinationsRef);
-            batch.set(newDocRef, { combination, hash });
-        });
+
+        for (const { combination, hash } of batchData) {
+            if (!(await doesCombinationExist(combination))) {
+                const newDocRef = doc(combinationsRef);
+                batch.set(newDocRef, { combination, hash });
+            } else {
+                outputDiv.textContent += `Skipped duplicate: ${combination}\n`;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
+        }
 
         try {
             await batch.commit();
@@ -146,11 +162,6 @@
             outputDiv.textContent += logEntry;
             outputDiv.scrollTop = outputDiv.scrollHeight;
 
-            if (batchData.length >= chunkSize) {
-                await storeBatchToFirestore(batchData);
-                batchData.length = 0;
-            }
-
             if (candidateHash === targetHashInput.value.trim()) {
                 outputDiv.textContent += `Match found! The string is: ${candidate}\n`;
                 outputDiv.scrollTop = outputDiv.scrollHeight;
@@ -171,6 +182,15 @@
         resumeBtn.disabled = true;
 
         running = true;
+
+        const targetHash = targetHashInput.value.trim();
+        if (await doesHashExist(targetHash)) {
+            outputDiv.textContent = `Target hash already exists in the database.\n`;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            return;
+        }
+
         outputDiv.textContent += "Starting brute force...\n";
 
         while (running) {
