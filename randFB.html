@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA-256 Brute Force with Firestore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        #output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #333;
+            padding: 10px;
+            background-color: #1e1e1e;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        input {
+            margin: 10px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>SHA-256 Brute Force with Firestore</h1>
+    <label>
+        Target Hash:
+        <input type="text" id="target-hash" placeholder="Enter target hash" value="513d246e0efb088ade89714bf68279b8ac0eb5452be47a3d55efc081b3df74fa">
+    </label>
+    <br>
+    <label>
+        Combination Length:
+        <input type="number" id="combination-length" value="24" min="1">
+    </label>
+    <div>
+        <button id="start-btn">Start Brute Force</button>
+        <button id="pause-btn" disabled>Pause</button>
+        <button id="resume-btn" disabled>Resume</button>
+    </div>
+    <div>
+        Combinations Tried: <span id="combinations-tried">0</span>
+    </div>
+    <div id="output"></div>
+
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, collection, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDK9UIDrsk4N0Fy0h4HHZBq6D3jjsoH1ow",
+            authDomain: "sha256-db.firebaseapp.com",
+            projectId: "sha256-db",
+            storageBucket: "sha256-db.firebasestorage.app",
+            messagingSenderId: "253461252485",
+            appId: "1:253461252485:web:0bf310b4774957ce875cec"
+        };
+
+        // Initialize Firebase and Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // DOM elements
+        const targetHashInput = document.getElementById("target-hash");
+        const combinationLengthInput = document.getElementById("combination-length");
+        const combinationsTriedDisplay = document.getElementById("combinations-tried");
+        const outputDiv = document.getElementById("output");
+        const startBtn = document.getElementById("start-btn");
+        const pauseBtn = document.getElementById("pause-btn");
+        const resumeBtn = document.getElementById("resume-btn");
+
+        // Global variables
+        const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+        let targetHash = "";
+        let length = 24;
+        let running = false;
+        let combinationsTried = 0;
+        let logCount = 0;
+        const maxLogEntries = 5;
+        const batchSize = 500; // Firestore free-tier rate consideration
+        let batchBuffer = [];
+
+        // SHA-256 hashing function
+        async function sha256(message) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(message);
+            const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+            return Array.from(new Uint8Array(hashBuffer))
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join("");
+        }
+
+        // Generate a random string
+        function generateRandomString(length) {
+            let result = "";
+            for (let i = 0; i < length; i++) {
+                result += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            return result;
+        }
+
+        // Store batch to Firestore
+        async function storeBatchToFirestore() {
+            if (batchBuffer.length === 0) return;
+
+            const batch = writeBatch(db);
+            const combinationsRef = collection(db, "combinations");
+
+            batchBuffer.forEach(({ combination, hash }) => {
+                const docRef = combinationsRef.doc();
+                batch.set(docRef, {
+                    combination,
+                    hash,
+                    timestamp: serverTimestamp()
+                });
+            });
+
+            try {
+                await batch.commit();
+                console.log(`Stored ${batchBuffer.length} combinations to Firestore.`);
+                batchBuffer = [];
+            } catch (error) {
+                console.error("Error storing batch to Firestore:", error);
+            }
+        }
+
+        // Brute force logic
+        async function bruteForceChunk() {
+            for (let i = 0; i < 1000; i++) { // Smaller chunks for rate limits
+                if (!running) return;
+
+                const candidate = generateRandomString(length);
+                const candidateHash = await sha256(candidate);
+                combinationsTried++;
+                combinationsTriedDisplay.textContent = combinationsTried.toLocaleString();
+
+                batchBuffer.push({ combination: candidate, hash: candidateHash });
+
+                // Update UI log
+                const logEntry = `Trying: ${candidate} -> ${candidateHash}\n`;
+                outputDiv.textContent += logEntry;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+
+                logCount++;
+                if (logCount > maxLogEntries) {
+                    const logs = outputDiv.textContent.split("\n");
+                    outputDiv.textContent = logs.slice(-maxLogEntries).join("\n");
+                    logCount = maxLogEntries;
+                }
+
+                if (candidateHash === targetHash) {
+                    outputDiv.textContent += `Match found! The string is: ${candidate}\n`;
+                    running = false;
+                    break;
+                }
+
+                // Store to Firestore in batches
+                if (batchBuffer.length >= batchSize) {
+                    await storeBatchToFirestore();
+                }
+            }
+        }
+
+        async function bruteForce() {
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+
+            running = true;
+            outputDiv.textContent += "Starting brute force...\n";
+
+            while (running) {
+                await bruteForceChunk();
+                await new Promise((resolve) => setTimeout(resolve, 100)); // Delay to prevent rate limits
+            }
+
+            if (!running) {
+                outputDiv.textContent += "Brute force paused.\n";
+            } else {
+                await storeBatchToFirestore(); // Store remaining combinations
+                outputDiv.textContent += "Brute force complete.\n";
+            }
+        }
+
+        // Event listeners
+        startBtn.addEventListener("click", () => {
+            targetHash = targetHashInput.value.trim();
+            length = parseInt(combinationLengthInput.value, 10);
+
+            if (!targetHash || targetHash.length !== 64) {
+                outputDiv.textContent += "Invalid target hash. Please enter a valid 64-character SHA-256 hash.\n";
+                return;
+            }
+
+            combinationsTried = 0;
+            outputDiv.textContent = "";
+            bruteForce();
+        });
+
+        pauseBtn.addEventListener("click", () => {
+            running = false;
+            pauseBtn.disabled = true;
+            startBtn.disabled = false;
+        });
+
+        resumeBtn.addEventListener("click", () => {
+            resumeBtn.disabled = true;
+            pauseBtn.disabled = false;
+            bruteForce();
+        });
+    </script>
+</body>
+</html>
