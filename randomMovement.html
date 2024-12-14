@@ -1,537 +1,710 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Entity Movement Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; background-color: #1e1e1e; color: #ffffff; font-family: Arial, sans-serif; }
-        canvas { border: 1px solid black; margin-top: 20px; background-color: white; }
-        #legend, .user-input, #congratsModal { margin-top: 10px; text-align: center; }
-        .entity-info { display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
-        .color-box { width: 20px; height: 20px; margin-right: 10px; }
-        .user-input label, .user-input input, .user-input button { margin-right: 5px; }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #1e1e1e;
-            border: 2px solid black;
-            padding: 20px;
-            z-index: 1000;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .modal.show { display: block; }
-        .modal button { margin-top: 10px; padding: 5px 10px; cursor: pointer; }
-	.emote-bubble {
-            position: absolute;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 5px;
-            padding: 2px 5px;
-            font-size: 14px;
-            font-weight: bold;
-        }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #1e1e1e;
+        color: #fff;
+        font-family: Arial, sans-serif
+      }
+
+      canvas {
+        border: 1px solid #000;
+        margin-top: 20px;
+        background-color: #fff
+      }
+
+      #congratsModal,
+      #legend,
+      .user-input {
+        margin-top: 10px;
+        text-align: center
+      }
+
+      .entity-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 5px
+      }
+
+      .color-box {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px
+      }
+
+      .user-input button,
+      .user-input input,
+      .user-input label {
+        margin-right: 5px
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #1e1e1e;
+        border: 2px solid #000;
+        padding: 20px;
+        z-index: 1000;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, .2)
+      }
+
+      .modal.show {
+        display: block
+      }
+
+      .modal button {
+        margin-top: 10px;
+        padding: 5px 10px;
+        cursor: pointer
+      }
+
+      .emote-bubble {
+        position: absolute;
+        background-color: rgba(255, 255, 255, .8);
+        border-radius: 5px;
+        padding: 2px 5px;
+        font-size: 14px;
+        font-weight: 700
+      }
+
+      #gameData {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        overflow: hidden;
+        padding: 10px;
+        border: 1px solid #000;
+        width: 300px
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Entity Movement Simulation</h1>
     <div id="serverHashDisplay">Loading serverHash...</div>
+    <div id="gameData">Loading gameData...</div>
     <canvas id="gameCanvas" width="500" height="500"></canvas>
     <div>
-        <button onclick="startGame()">Start</button>
-        <button onclick="pauseGame()">Pause</button>
-        <button onclick="restartGame()">Restart</button>
-    <button onclick="clearAll()">Clear All</button>
+      <button id="start" onclick="startGame()">Start</button>
+      <button id="pause" onclick="pauseGame()">Pause</button>
+      <button id="restart" onclick="restartGame()">Restart</button>
+      <button id="clear" onclick="clearAll()">Clear All</button>
     </div>
     <p id="winner"></p>
-
-<div class="user-input">
-    <label for="totalUsers">Total Users:</label>
-    <input type="number" id="totalUsers" min="1" max="10" value="1">
-    <label for="entitiesPerUser">Entities per User:</label>
-    <input type="number" id="entitiesPerUser" min="1" max="10" value="1">
-    <button onclick="autoAddUsers()">Auto Add Users</button>
-</div>
-
     <div class="user-input">
-        <label for="username">User Name:</label>
-        <input type="text" id="username">
-        <label for="userColor">Color:</label>
-        <input type="color" id="userColor">
-        <label for="entityCount">Entity Count:</label>
-        <input type="number" id="entityCount" min="1" max="10" value="1">
-        <button onclick="addUser()">Add User</button>
+      <label for="totalUsers">Total Users:</label>
+      <input type="number" id="totalUsers" min="1" max="10" value="1">
+      <label for="entitiesPerUser">Entities per User:</label>
+      <input type="number" id="entitiesPerUser" min="1" max="10" value="1">
+      <button id="autoadduser" onclick="autoAddUsers()">Auto Add Users</button>
     </div>
+    <div class="user-input">
+      <label for="username">User Name:</label>
+      <input type="text" id="username">
+      <label for="userColor">Color:</label>
+      <input type="color" id="userColor">
+      <label for="entityCount">Entity Count:</label>
+      <input type="number" id="entityCount" min="1" max="10" value="1">
+      <button id="adduser" onclick="addUser()">Add User</button>
+    </div>
+   <!-- <div class="user-input">
+      <label for="gameCodeText">Game Data Verifier:</label>
+      <input type="text" id="gameCodeText">
+      <button id="gameCodeVerify" onclick="gameCodeVerify()">Re-verify</button>
+    </div> -->
 
     <div id="legend"></div>
-
-    <!-- Congratulatory Modal -->
     <div id="congratsModal" class="modal">
-        <h2>Congratulations!</h2>
-        <div style="display: flex; align-items: center; justify-content: center;">
-            <div id="winnerColorBox" class="color-box"></div>
-            <p id="congratsMessage"></p>
-        </div>
-        <button onclick="closeModal()">Close</button>
+      <h2>Congratulations!</h2>
+      <div style="display:flex;align-items:center;justify-content:center">
+        <div id="winnerColorBox" class="color-box"></div>
+        <p id="congratsMessage"></p>
+      </div>
+      <button onclick="closeModal()">Close</button>
     </div>
-
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const canvasCenter = { x: canvas.width / 2, y: canvas.height / 2 };
-        const users = [];
-        const entities = [];
-        const emotes = {
-            collision: ["😡", "😠", "😤", "😱", "💢", "💥", "😖", "😣", "😬", "bonk", "*thud*", "ouch!", "oof", "💥POW!💥", "😵💫", ">:(", "⋋_⋌", "(-_-;)", "(╯°□°）╯︵ ┻━┻"],
-            nearCenter: ["😃", "😎", "🎉", "😁", "😆", "😄", "🥳", "🤩", "💪", "🏆", "🥇", "👑", "Lets go!🥇"]
-        };
-        const tickRate = 50;
-        let serverHash = "server123";
-        let tick = 0;
-        let winnerDeclared = false;
-        let animationFrame;
-        let gamePaused = true;
-
-        // Fetch and process data function to generate random strings
-        async function fetchAndProcessData() {
-            try {
-                const response = await fetch('https://www.random.org/strings/?num=4&len=32&digits=on&upperalpha=on&loweralpha=on&unique=on&format=plain&rnd=new');
-                const data = await response.text();
-                const processedData = data.replace(/\s+/g, '');
-                return processedData;
-            } catch (error) {
-                console.error('Error fetching the strings:', error);
-                return '';
-            }
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const canvasCenter = {
+        x: canvas.width / 2,
+        y: canvas.height / 2
+      };
+      const users = [];
+      const entities = [];
+      const emotes = {
+        collision: ["😡", "😠", "😤", "😱", "💢", "💥", "😖", "😣", "😬", "bonk", "*thud*", "ouch!", "oof", "💥POW!💥", "😵💫", ">:(", "⋋_⋌", "(-_-;)", "(╯°□°）╯︵ ┻━┻"],
+        nearCenter: ["😃", "😎", "🎉", "😁", "😆", "😄", "🥳", "🤩", "💪", "🏆", "🥇", "👑", "Lets go!🥇"]
+      };
+      const tickRate = 50;
+      let serverHash = "server123";
+      let serverSeed;
+      let tick = 0;
+      let winnerDeclared = false;
+      let animationFrame;
+      let gamePaused = true;
+      let gameStarted = false;
+      let gameData = "Game Data: \n";
+      // Fetch and process data function to generate random strings
+      async function fetchAndProcessData() {
+        try {
+          const response = await fetch('https://www.random.org/strings/?num=1&len=24&digits=on&upperalpha=off&loweralpha=on&unique=off&format=plain&rnd=new');
+          const data = await response.text();
+          const processedData = data.replace(/\s+/g, '');
+          return processedData;
+        } catch (error) {
+          console.error('Error fetching the strings:', error);
+          const newresponse = generateRandomStringCrypto(24);
+          return newresponse;
         }
+      }
 
-        // SHA-256 hash function
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
+      function generateRandomStringCrypto(length) {
+        const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        const array = new Uint32Array(length * 2); // Ensure enough random values for characters
+        crypto.getRandomValues(array);
+        for (let i = 0; i < length; i++) {
+          const randomValue = array[i * 2] + array[i * 2 + 1]; // Combine for better distribution
+          result += characters.charAt(randomValue % characters.length);
         }
+        return result;
+      }
 
-        // Initialize serverHash on page load
-        async function initializeServerHash() {
-            const randomString = await fetchAndProcessData();
-            serverHash = await sha256(randomString);
-            console.log('Generated serverHash:', serverHash);
-            // Display the serverHash on the page
-            document.getElementById('serverHashDisplay').textContent = `Server Hash: ${serverHash}`;
+      function getSpawnLocation(seed, count) {
+        // Combine the seed and entity count to generate a "ticket"
+        const ticket = (parseInt(seed) + count) % 4; // 4 possible corners
+        // Map ticket to specific corners
+        switch (ticket) {
+          case 0:
+            return {
+              x: 0, y: 0
+            }; // Top-left
+          case 1:
+            return {
+              x: canvasWidth, y: 0
+            }; // Top-right
+          case 2:
+            return {
+              x: 0, y: canvasHeight
+            }; // Bottom-left
+          case 3:
+            return {
+              x: canvasWidth, y: canvasHeight
+            }; // Bottom-right
         }
-
-        // Generate seeds for each entity using fetchAndProcessData
-        async function generateEntitySeed() {
-            return await fetchAndProcessData();
+      }
+      // SHA-256 hash function
+      async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+      }
+      // Initialize serverHash on page load
+      async function initializeServerHash() {
+        const randomString = await fetchAndProcessData();
+        serverHash = await sha256(randomString);
+        serverSeed = randomString;
+        gameData += serverSeed + ";";
+        console.log('Generated serverString:', serverSeed);
+        console.log('Generated serverHash:', serverHash);
+        // Display the serverHash on the page
+        document.getElementById('serverHashDisplay').textContent = `Server Hash: ${serverHash}`;
+      }
+      // Generate seeds for each entity using fetchAndProcessData
+      async function generateEntitySeed() {
+        return await fetchAndProcessData();
+      }
+      class Entity {
+        constructor(userId, seed, color, enseed) {
+          this.userId = userId;
+          this.seed = seed;
+          this.enseed = enseed;
+          this.color = color;
+          this.position = this.getRandomEdgePosition(); // entities.length
+          this.lastPosition = {
+            ...this.position
+          };
+          this.direction = 'Idle';
+          this.velocity = {
+            x: Math.random() * 2 - 1,
+            y: Math.random() * 2 - 1
+          }; // Random initial velocity
+          this.emote = null;
+          this.emoteTimeout = null;
         }
-
-
-        class Entity {
-            constructor(userId, seed, color, enseed) {
-                this.userId = userId;
-                this.seed = seed;
-		this.enseed = enseed;
-                this.color = color;
-                this.position = this.getRandomEdgePosition();
-                this.lastPosition = { ...this.position };
-                this.direction = 'Idle';
-                this.velocity = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 }; // Random initial velocity
-                this.emote = null;
-                this.emoteTimeout = null;
-            }
-
-            getRandomEdgePosition() {
-                const edge = Math.floor(Math.random() * 4);
-                switch(edge) {
-                    case 0: return { x: 0, y: Math.random() * canvas.height };
-                    case 1: return { x: canvas.width, y: Math.random() * canvas.height };
-                    case 2: return { x: Math.random() * canvas.width, y: 0 };
-                    case 3: return { x: Math.random() * canvas.width, y: canvas.height };
-                }
-            }
-
-            async move() {
-                const combinedSeed = await sha256(this.getCombinedSeed());
-                const randX = Math.sin(combinedSeed.hashCode()) * 2;
-                const randY = Math.cos(combinedSeed.hashCode()) * 2;
-
-                this.position.x += randX;
-                this.position.y += randY;
-                this.position.x = Math.max(0, Math.min(canvas.width, this.position.x));
-                this.position.y = Math.max(0, Math.min(canvas.height, this.position.y));
-
-                this.updateDirection();
-                this.detectNearCenter();
-		this.enseed = combinedSeed;
-            }
-
-            detectNearCenter() {
-                const dx = this.position.x - canvasCenter.x;
-                const dy = this.position.y - canvasCenter.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 50 && !this.emote) { 
-                    this.showEmote("nearCenter");
-                }
-            }
-
-    showEmote(type) {
-        if (this.emoteTimeout) clearTimeout(this.emoteTimeout); // Clear any existing timeout
-        this.emote = emotes[type][Math.floor(Math.random() * emotes[type].length)];
-        this.emoteTimeout = setTimeout(() => this.emote = null, 1000);
-    }
-            detectCollision() {
-                for (const otherEntity of entities) {
-                    if (otherEntity !== this) {
-                        const dx = this.position.x - otherEntity.position.x;
-                        const dy = this.position.y - otherEntity.position.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-			/*
-                        if (distance < 10) { // Collision threshold
-                            this.handleCollision(otherEntity, dx, dy);
-                        }
-			if(!this.emote) {
-                            this.showEmote("collision");
-			}*/
-                        if (distance < 10) {
-                            this.showEmote("collision");
-                            this.handleCollision(otherEntity, dx, dy);
-                            //this.velocity.x *= -1;
-                            //this.velocity.y *= -1;
-                        }
-                    }
-                }
-            }
-
-            handleCollision(otherEntity, dx, dy) {
-                const angle = Math.atan2(dy, dx);
-                const speed1 = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
-                const speed2 = Math.sqrt(otherEntity.velocity.x ** 2 + otherEntity.velocity.y ** 2);
-
-                const newVelocityX1 = speed2 * Math.cos(angle);
-                const newVelocityY1 = speed2 * Math.sin(angle);
-                const newVelocityX2 = speed1 * Math.cos(angle + Math.PI);
-                const newVelocityY2 = speed1 * Math.sin(angle + Math.PI);
-
-                this.velocity.x = newVelocityX1;
-                this.velocity.y = newVelocityY1;
-                otherEntity.velocity.x = newVelocityX2;
-                otherEntity.velocity.y = newVelocityY2;
-
-                this.position.x += this.velocity.x;
-                this.position.y += this.velocity.y;
-                otherEntity.position.x += otherEntity.velocity.x;
-                otherEntity.position.y += otherEntity.velocity.y;
-            }
-
-
-updateDirection() {
-    const dx = this.position.x - this.lastPosition.x;
-    const dy = this.position.y - this.lastPosition.y;
-    const threshold = 1; // Movement threshold to avoid minor direction changes
-
-    if (Math.abs(dx) < threshold && Math.abs(dy) < threshold) {
-        this.direction = 'Idle'; // Set direction to 'Idle' for very small movements
-    } else if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 0 && dy > threshold) {
-            this.direction = 'Down-Right';
-        } else if (dx > 0 && dy < -threshold) {
-            this.direction = 'Up-Right';
-        } else if (dx < 0 && dy > threshold) {
-            this.direction = 'Down-Left';
-        } else if (dx < 0 && dy < -threshold) {
-            this.direction = 'Up-Left';
-        } else {
-            this.direction = dx > 0 ? 'Right' : 'Left';
+        getRandomEdgePosition() {
+          let spawnSeed = serverSeed + ":" + entities.length;
+          const rollNumber = new Math.seedrandom(spawnSeed)();
+          const ticket = Math.floor(rollNumber * 4);
+          //const ticket = (parseInt(serverSeed) + entities.length) % 4; // 4 possible corners
+          console.log("spawn pos : " + ticket);
+          //const edge = Math.floor(Math.random() * 4);
+          /* switch(edge) {
+               case 0: return { x: 0, y: Math.random() * canvas.height };
+               case 1: return { x: canvas.width, y: Math.random() * canvas.height };
+               case 2: return { x: Math.random() * canvas.width, y: 0 };
+               case 3: return { x: Math.random() * canvas.width, y: canvas.height };
+           }*/
+          // Map ticket to specific corners
+          switch (ticket) {
+            case 0:
+              return {
+                x: 0, y: 0
+              }; // Top-left
+            case 1:
+              return {
+                x: canvas.width, y: 0
+              }; // Top-right
+            case 2:
+              return {
+                x: 0, y: canvas.height
+              }; // Bottom-left
+            case 3:
+              return {
+                x: canvas.width, y: canvas.height
+              }; // Bottom-right
+          }
         }
-    } else {
-        if (dy > 0 && dx > threshold) {
-            this.direction = 'Down-Right';
-        } else if (dy > 0 && dx < -threshold) {
-            this.direction = 'Down-Left';
-        } else if (dy < 0 && dx > threshold) {
-            this.direction = 'Up-Right';
-        } else if (dy < 0 && dx < -threshold) {
-            this.direction = 'Up-Left';
-        } else {
-            this.direction = dy > 0 ? 'Down' : 'Up';
+        async move() {
+          const combinedSeed = this.getCombinedSeed();
+          const rollNumber = new Math.seedrandom(combinedSeed)();
+          const ticket = Math.floor(rollNumber * 100_000);
+          const randX = Math.sin(ticket) * 10; // Scales based on ticket
+          const randY = Math.cos(ticket) * 10;
+          //console.log(combinedSeed + ": (" + randX + ", " + randY +")");
+          this.position.x += randX;
+          this.position.y += randY;
+          this.position.x = Math.max(0, Math.min(canvas.width, this.position.x));
+          this.position.y = Math.max(0, Math.min(canvas.height, this.position.y));
+          this.updateDirection();
+          this.detectNearCenter();
+          this.enseed = combinedSeed;
         }
-    }
-
-    // Update last position after calculating the direction
-    //this.lastPosition = { ...this.position };
-}
-
-
-            getCombinedSeed() {
-                return tick + ':' + serverHash + ':'  + entities.length + ':'  + this.seed + ':' + tick;
-            }
-
-            checkCollision() {
-                const dx = this.position.x - canvasCenter.x;
-                const dy = this.position.y - canvasCenter.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                return distance < 10;
-            }
-
-            distanceToApple() {
-                const dx = this.position.x - canvasCenter.x;
-                const dy = this.position.y - canvasCenter.y;
-                return Math.sqrt(dx * dx + dy * dy);
-            }
+        detectNearCenter() {
+          const dx = this.position.x - canvasCenter.x;
+          const dy = this.position.y - canvasCenter.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 50 && !this.emote) {
+            this.showEmote("nearCenter");
+          }
         }
-
-        String.prototype.hashCode = function() {
-            let hash = 0;
-            for (let i = 0; i < this.length; i++) {
-                const char = this.charCodeAt(i);
-                hash = (hash << 5) - hash + char;
-                hash |= 0;
-            }
-            return hash;
-        };
-
-        async function addUser() {
-            const username = document.getElementById('username').value;
-            const userColor = document.getElementById('userColor').value;
-            const entityCount = parseInt(document.getElementById('entityCount').value, 10);
-
-            const userId = users.length;
-            const user = { id: userId, name: username, color: userColor, entityCount: entityCount };
-            users.push(user);
-
-            for (let i = 0; i < entityCount; i++) {
-                //const seed = Math.floor(Math.random() * 100000);
-                const seed = await generateEntitySeed();
-		const enseed = await sha256(seed);
-                const entity = new Entity(userId, seed, userColor, enseed);
-                entities.push(entity);
-                addEntityToLegend(entity, username);
-            }
+        showEmote(type) {
+          if (this.emoteTimeout) clearTimeout(this.emoteTimeout); // Clear any existing timeout
+          const combinedSeed = this.getCombinedSeed();
+          const rollNumber = new Math.seedrandom(combinedSeed)();
+          const ticket = Math.floor(rollNumber * emotes[type].length);
+          this.emote = emotes[type][ticket];
+          console.log(combinedSeed + ": " + ticket + " : " + this.emote);
+          this.emoteTimeout = setTimeout(() => this.emote = null, 1000);
         }
-
-// Function to automatically add users and entities
-async function autoAddUsers() {
-    const totalUsers = parseInt(document.getElementById('totalUsers').value, 10);
-    const entitiesPerUser = parseInt(document.getElementById('entitiesPerUser').value, 10);
-
-    for (let i = 0; i < totalUsers; i++) {
+        detectCollision() {
+          for (const otherEntity of entities) {
+            if (otherEntity !== this) {
+              const dx = this.position.x - otherEntity.position.x;
+              const dy = this.position.y - otherEntity.position.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              if (distance < 10) {
+                this.showEmote("collision");
+                //this.handleCollision(otherEntity, dx, dy);
+              }
+            }
+          }
+        }
+        handleCollision(otherEntity, dx, dy) {
+          const angle = Math.atan2(dy, dx);
+          const speed1 = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+          const speed2 = Math.sqrt(otherEntity.velocity.x ** 2 + otherEntity.velocity.y ** 2);
+          const newVelocityX1 = speed2 * Math.cos(angle);
+          const newVelocityY1 = speed2 * Math.sin(angle);
+          const newVelocityX2 = speed1 * Math.cos(angle + Math.PI);
+          const newVelocityY2 = speed1 * Math.sin(angle + Math.PI);
+          this.velocity.x = newVelocityX1;
+          this.velocity.y = newVelocityY1;
+          otherEntity.velocity.x = newVelocityX2;
+          otherEntity.velocity.y = newVelocityY2;
+          this.position.x += this.velocity.x;
+          this.position.y += this.velocity.y;
+          otherEntity.position.x += otherEntity.velocity.x;
+          otherEntity.position.y += otherEntity.velocity.y;
+        }
+        updateDirection() {
+          const dx = this.position.x - this.lastPosition.x;
+          const dy = this.position.y - this.lastPosition.y;
+          const threshold = 1; // Movement threshold to avoid minor direction changes
+          if (Math.abs(dx) < threshold && Math.abs(dy) < threshold) {
+            this.direction = 'Idle'; // Set direction to 'Idle' for very small movements
+          } else if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx > 0 && dy > threshold) {
+              this.direction = 'Down-Right';
+            } else if (dx > 0 && dy < -threshold) {
+              this.direction = 'Up-Right';
+            } else if (dx < 0 && dy > threshold) {
+              this.direction = 'Down-Left';
+            } else if (dx < 0 && dy < -threshold) {
+              this.direction = 'Up-Left';
+            } else {
+              this.direction = dx > 0 ? 'Right' : 'Left';
+            }
+          } else {
+            if (dy > 0 && dx > threshold) {
+              this.direction = 'Down-Right';
+            } else if (dy > 0 && dx < -threshold) {
+              this.direction = 'Down-Left';
+            } else if (dy < 0 && dx > threshold) {
+              this.direction = 'Up-Right';
+            } else if (dy < 0 && dx < -threshold) {
+              this.direction = 'Up-Left';
+            } else {
+              this.direction = dy > 0 ? 'Down' : 'Up';
+            }
+          }
+        }
+        getCombinedSeed() {
+          return entities.length + ":" + tick + ":" + serverSeed + ":" + this.seed + ":" + tick + ":" + entities.length;
+        }
+        checkCollision() {
+          const dx = this.position.x - canvasCenter.x;
+          const dy = this.position.y - canvasCenter.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          return distance < 10;
+        }
+        distanceToApple() {
+          const dx = this.position.x - canvasCenter.x;
+          const dy = this.position.y - canvasCenter.y;
+          return Math.sqrt(dx * dx + dy * dy);
+        }
+      }
+      String.prototype.hashCode = function() {
+        let hash = 0;
+        for (let i = 0; i < this.length; i++) {
+          const char = this.charCodeAt(i);
+          hash = (hash << 5) - hash + char;
+          hash |= 0;
+        }
+        return hash;
+      };
+      async function addUser() {
+        const username = document.getElementById('username').value;
+        const userColor = document.getElementById('userColor').value;
+        const entityCount = parseInt(document.getElementById('entityCount').value, 10);
         const userId = users.length;
-        const username = 'USER ' + Math.floor(Math.random() * 100000);
-        const userColor = `hsl(${Math.floor(Math.random() * 360)}, 100%, 50%)`;
-        users.push({ id: userId, name: username, color: userColor, entityCount: entityCount });
-
-        for (let j = 0; j < entitiesPerUser; j++) {
+        const user = {
+          id: userId,
+          name: username,
+          color: userColor,
+          entityCount: entityCount
+        };
+        users.push(user);
+        for (let i = 0; i < entityCount; i++) {
+          //const seed = Math.floor(Math.random() * 100000);
+          const seed = await generateEntitySeed();
+          const enseed = await sha256(seed);
+          const entity = new Entity(userId, seed, userColor, enseed);
+          entities.push(entity);
+          addEntityToLegend(entity, username);
+        }
+      }
+      // Function to automatically add users and entities
+      async function autoAddUsers() {
+        const totalUsers = parseInt(document.getElementById('totalUsers').value, 10);
+        const entitiesPerUser = parseInt(document.getElementById('entitiesPerUser').value, 10);
+        for (let i = 0; i < totalUsers; i++) {
+          const userId = users.length;
+	  const userIDseed = serverSeed + ":" + i;
+          const rollNumber = new Math.seedrandom(userIDseed)();
+          //const ticket = Math.floor(rollNumber * 100000);
+          const username = 'USER ' + Math.floor(rollNumber * 100000);
+          const userColor = `hsl(${Math.floor(rollNumber * 360)}, 100%, 50%)`;
+          users.push({
+            id: userId,
+            name: username,
+            color: userColor,
+            entityCount: entityCount
+          });
+          for (let j = 0; j < entitiesPerUser; j++) {
             const entitySeed = await generateEntitySeed();
-	    const enseed = await sha256(entitySeed);
+            const enseed = await sha256(entitySeed);
             const entity = new Entity(userId, entitySeed, userColor, enseed);
             entities.push(entity);
-addEntityToLegend(entity, username);
+            addEntityToLegend(entity, username);
+          }
         }
+      }
+      async function addEntityToLegend(entity, username) {
+        const legend = document.getElementById('legend');
+        const entityInfo = document.createElement('div');
+        entityInfo.className = 'entity-info';
+        entityInfo.id = `entity-${entity.seed}`;
+        const colorBox = document.createElement('div');
+        colorBox.className = 'color-box';
+        colorBox.style.backgroundColor = entity.color;
+        // Create span for main display text
+        const text = document.createElement('span');
+        text.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
+        // Seed information container (initially hidden)
+        const seedInfo = document.createElement('div');
+        seedInfo.className = 'seed-info';
+        seedInfo.style.display = 'none';
+        seedInfo.style.marginTop = '5px';
+        seedInfo.style.maxWidth = '250px';
+        seedInfo.style.wordWrap = 'break-word';
+        // Seed and encrypted seed text
+        const seedText = document.createElement('p');
+        seedText.textContent = `Seed: ${entity.seed}`;
+        const encryptedSeedText = document.createElement('p');
+        encryptedSeedText.id = `encrypted-seed-${entity.seed}`;
+        encryptedSeedText.textContent = `Combined Seed: ${entity.getCombinedSeed()}\n\nEncrypted Seed: ${entity.enSeed}`;
+        seedInfo.appendChild(seedText);
+        seedInfo.appendChild(encryptedSeedText);
+        // Toggle button to show/hide seed information
+        const toggleButton = document.createElement('button');
+        toggleButton.textContent = 'Show Seed Info';
+        toggleButton.onclick = function() {
+          const isHidden = seedInfo.style.display === 'none';
+          seedInfo.style.display = isHidden ? 'block' : 'none';
+          toggleButton.textContent = isHidden ? 'Hide Seed Info' : 'Show Seed Info';
+        };
+        // Append all elements to the entity info container
+        entityInfo.appendChild(colorBox);
+        entityInfo.appendChild(text);
+        entityInfo.appendChild(toggleButton);
+        entityInfo.appendChild(seedInfo);
+        // Add entity info to the legend
+        legend.appendChild(entityInfo);
+      }
+
+      function updateLegendDirections() {
+        entities.forEach(entity => {
+          const entityInfo = document.getElementById(`entity-${entity.seed}`);
+          const directionText = entityInfo.querySelector('span');
+          const username = users.find(user => user.id === entity.userId).name;
+          directionText.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
+          // Update the Encrypted Seed display with the current combined seed
+          const encryptedSeedText = document.getElementById(`encrypted-seed-${entity.seed}`);
+          encryptedSeedText.textContent = `Combined Seed: ${entity.getCombinedSeed()} \n\n\n Encrypted Seed: ${entity.enseed}`;
+        });
+      }
+
+      function openModal(winnerEntity) {
+        const congratsModal = document.getElementById('congratsModal');
+        const congratsMessage = document.getElementById('congratsMessage');
+        const winnerColorBox = document.getElementById('winnerColorBox');
+        const username = users.find(user => user.id === winnerEntity.userId).name;
+        congratsMessage.innerText = `${username}'s Entity\nSeed: ${winnerEntity.seed} has won!\nWith a total of ${tick} ticks!`;
+        winnerColorBox.style.backgroundColor = winnerEntity.color;
+        congratsModal.classList.add('show');
+        pauseGame(); // Ensure the game pauses when a winner is declared
+      }
+
+      function closeModal() {
+        document.getElementById('congratsModal').classList.remove('show');
+      }
+
+      function clearAll() {
+        users.length = 0;
+        gameStarted = false;
+        entities.length = 0;
+        renderLegend();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        tick = 0;
+        winnerDeclared = false;
+        gamePaused = true;
+        cancelAnimationFrame(animationFrame);
+        document.getElementById('winner').textContent = '';
+        closeModal();
+        document.getElementById("start").disabled = false;
+        document.getElementById("pause").disabled = false;
+        document.getElementById("restart").disabled = false;
+        document.getElementById("clear").disabled = false;
+        document.getElementById("autoadduser").disabled = false;
+        document.getElementById("adduser").disabled = false;
+      }
+
+      function renderLegend() {
+        const legend = document.getElementById('legend');
+        legend.innerHTML = ''; // Clear existing legend content
+      }
+
+      function drawGoldenApple() {
+        ctx.fillStyle = 'gold';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 10, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      function drawEntity(entity) {
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(entity.position.x, entity.position.y, 5, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.fillStyle = entity.color;
+        ctx.beginPath();
+        ctx.arc(entity.position.x, entity.position.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        if (entity.emote) {
+          ctx.font = '14px Arial';
+          ctx.fillStyle = 'black';
+          ctx.fillText(entity.emote, entity.position.x + 8, entity.position.y - 8);
+        }
+      }
+
+      function gameLoop() {
+        if (winnerDeclared) return; // Stop the loop if there's a winner
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGoldenApple();
+        let closestEntity = null;
+        let closestDistance = Infinity;
+        entities.forEach(entity => {
+          entity.move();
+          entity.detectCollision();
+          if (entity.checkCollision() && !winnerDeclared) {
+            winnerDeclared = true;
+            openModal(entity);
+          }
+          const distanceToApple = entity.distanceToApple();
+          if (distanceToApple < closestDistance) {
+            closestDistance = distanceToApple;
+            closestEntity = entity;
+          }
+          drawEntity(entity);
+          ctx.fillStyle = 'black';
+          ctx.font = '10px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(users[entity.userId].name, entity.position.x, entity.position.y + 10);
+          //ctx.fillText(`${entity.direction}`, entity.position.x, entity.position.y - 10);
+        });
+        if (closestEntity) {
+          ctx.strokeStyle = 'gold';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(closestEntity.position.x, closestEntity.position.y, 8, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+        updateLegendDirections();
+        tick++;
+        animationFrame = requestAnimationFrame(gameLoop);
+      }
+
+      function startGame() {
+        if (gameStarted == false) {
+          entities.forEach(entity => {
+            entity.position = entity.getRandomEdgePosition();
+            gameData += entity.seed + ";";
+          });
+          gameStarted = true;
+          gamePaused = false;
+          winnerDeclared = false; // Reset winner state on start
+          animationFrame = requestAnimationFrame(gameLoop);
+          document.getElementById("start").disabled = true;
+          document.getElementById("pause").disabled = false;
+          document.getElementById("restart").disabled = false;
+          document.getElementById("clear").disabled = true;
+          document.getElementById("autoadduser").disabled = true;
+          document.getElementById("adduser").disabled = true;
+        }
+        if (gamePaused && gameStarted) {
+          gamePaused = false;
+          winnerDeclared = false; // Reset winner state on start
+          animationFrame = requestAnimationFrame(gameLoop);
+          document.getElementById("start").disabled = true;
+          document.getElementById("pause").disabled = false;
+          document.getElementById("restart").disabled = false;
+          document.getElementById("clear").disabled = true;
+          document.getElementById("autoadduser").disabled = true;
+          document.getElementById("adduser").disabled = true;
+        }
+        const gameDataText = document.getElementById("gameData");
+        gameDataText.textContent = `${gameData}`;
+      }
+
+      function pauseGame() {
+        document.getElementById("start").disabled = false;
+        document.getElementById("clear").disabled = false;
+        gamePaused = true;
+        cancelAnimationFrame(animationFrame);
+      }
+
+      function restartGame() {
+        pauseGame();
+        tick = 0;
+        winnerDeclared = false;
+        document.getElementById('winner').textContent = '';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        entities.forEach(entity => {
+          entity.position = entity.getRandomEdgePosition();
+        });
+        startGame();
+      }
+
+async function gameCodeVerify() {
+    // Retrieve the game code entered by the user
+    let gameCode = document.getElementById('gameCodeText').value;
+
+    // Split the game code into individual seeds
+    let seeds = gameCode.split(';');
+    if (seeds.length === 0) {
+        console.log("Invalid game code. Please provide a valid code.");
+        return;
     }
 
+    // Extract the server seed (the first seed in the list)
+    serverSeed = seeds[0];
+
+    // Generate and display the server hash
+    serverHash = await sha256(serverSeed);
+    document.getElementById('serverHashDisplay').textContent = `Server Hash: ${serverHash}`;
+
+    // clears users
+        users = [];
+
+    // Process remaining seeds to add users
+    for (let i = 1; i < seeds.length; i++) {
+        const userSeed = seeds[i];
+        const rollNumber = new Math.seedrandom(serverSeed + ":" + userSeed)();
+        const userId = users.length - 1;
+        const username = `USER ${Math.floor(rollNumber * 100000)}`;
+        const userColor = `hsl(${Math.floor(rollNumber * 360)}, 100%, 50%)`;
+
+        // Add the user to the users array
+        users.push({
+            id: userId,
+            name: username,
+            color: userColor,
+            seed: userSeed,
+        });
+          for (let j = 0; j < entitiesPerUser; j++) {
+            const entitySeed = await generateEntitySeed();
+            const enseed = await sha256(entitySeed);
+            const entity = new Entity(userId, entitySeed, userColor, enseed);
+            entities.push(entity);
+            addEntityToLegend(entity, username);
+          }
+
+        // Update the UI or console to reflect the new user
+        console.log(`Added user: ${username}, Color: ${userColor}`);
+    }
+
+    // Optional: Update the input field to reflect valid seeds
+    document.getElementById('gameCodeText').value = seeds.join(';');
 }
 
-async function addEntityToLegend(entity, username) {
-    const legend = document.getElementById('legend');
-    const entityInfo = document.createElement('div');
-    entityInfo.className = 'entity-info';
-    entityInfo.id = `entity-${entity.seed}`;
 
-    const colorBox = document.createElement('div');
-    colorBox.className = 'color-box';
-    colorBox.style.backgroundColor = entity.color;
-
-    // Create span for main display text
-    const text = document.createElement('span');
-    text.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
-
-    // Seed information container (initially hidden)
-    const seedInfo = document.createElement('div');
-    seedInfo.className = 'seed-info';
-    seedInfo.style.display = 'none';
-    seedInfo.style.marginTop = '5px';
-    seedInfo.style.maxWidth = '250px';
-    seedInfo.style.wordWrap = 'break-word';
-
-    // Seed and encrypted seed text
-    const seedText = document.createElement('p');
-    seedText.textContent = `Seed: ${entity.seed}`;
-
-    const encryptedSeedText = document.createElement('p');
-    encryptedSeedText.id = `encrypted-seed-${entity.seed}`;
-    encryptedSeedText.textContent = `Combined Seed: ${entity.getCombinedSeed()}\n\nEncrypted Seed: ${entity.enSeed}`;
-
-    seedInfo.appendChild(seedText);
-    seedInfo.appendChild(encryptedSeedText);
-
-    // Toggle button to show/hide seed information
-    const toggleButton = document.createElement('button');
-    toggleButton.textContent = 'Show Seed Info';
-    toggleButton.onclick = function () {
-        const isHidden = seedInfo.style.display === 'none';
-        seedInfo.style.display = isHidden ? 'block' : 'none';
-        toggleButton.textContent = isHidden ? 'Hide Seed Info' : 'Show Seed Info';
-    };
-
-    // Append all elements to the entity info container
-    entityInfo.appendChild(colorBox);
-    entityInfo.appendChild(text);
-    entityInfo.appendChild(toggleButton);
-    entityInfo.appendChild(seedInfo);
-
-    // Add entity info to the legend
-    legend.appendChild(entityInfo);
-}
-
-function updateLegendDirections() {
-    entities.forEach(entity => {
-        const entityInfo = document.getElementById(`entity-${entity.seed}`);
-        const directionText = entityInfo.querySelector('span');
-        const username = users.find(user => user.id === entity.userId).name;
-        directionText.innerText = `${username}'s Entity | Movement: ${entity.direction} | Tick: ${tick}`;
-
-        // Update the Encrypted Seed display with the current combined seed
-        const encryptedSeedText = document.getElementById(`encrypted-seed-${entity.seed}`);
-        encryptedSeedText.textContent = `Combined Seed: ${entity.getCombinedSeed()} \n\n\n Encrypted Seed: ${entity.enseed}`;
-    });
-}
-
-        function openModal(winnerEntity) {
-            const congratsModal = document.getElementById('congratsModal');
-            const congratsMessage = document.getElementById('congratsMessage');
-            const winnerColorBox = document.getElementById('winnerColorBox');
-
-            const username = users.find(user => user.id === winnerEntity.userId).name;
-            congratsMessage.innerText = `${username}'s Entity\nSeed: ${winnerEntity.seed} has won!\nWith a total of ${tick} ticks!`;
-            winnerColorBox.style.backgroundColor = winnerEntity.color;
-
-            congratsModal.classList.add('show');
-            pauseGame(); // Ensure the game pauses when a winner is declared
-        }
-
-        function closeModal() {
-            document.getElementById('congratsModal').classList.remove('show');
-        }
-
-function clearAll() {
-    users.length = 0;
-    entities.length = 0;
-    renderLegend();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    tick = 0;
-    winnerDeclared = false;
-    gamePaused = true;
-    cancelAnimationFrame(animationFrame);
-    document.getElementById('winner').textContent = '';
-    closeModal();
-}
-function renderLegend() {
-    const legend = document.getElementById('legend');
-    legend.innerHTML = ''; // Clear existing legend content
-}
-        function drawGoldenApple() {
-            ctx.fillStyle = 'gold';
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 10, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-
-        function drawEntity(entity) {
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(entity.position.x, entity.position.y, 5, 0, 2 * Math.PI);
-            ctx.stroke();
-
-            ctx.fillStyle = entity.color;
-            ctx.beginPath();
-            ctx.arc(entity.position.x, entity.position.y, 5, 0, 2 * Math.PI);
-            ctx.fill();
-
-            if (entity.emote) {
-                ctx.font = '14px Arial';
-                ctx.fillStyle = 'black';
-                ctx.fillText(entity.emote, entity.position.x + 8, entity.position.y - 8);
-            }
-        }
-
-        function gameLoop() {
-            if (winnerDeclared) return; // Stop the loop if there's a winner
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawGoldenApple();
-            let closestEntity = null;
-            let closestDistance = Infinity;
-
-            entities.forEach(entity => {
-                entity.move();
-                entity.detectCollision();
-
-                if (entity.checkCollision() && !winnerDeclared) {
-                    winnerDeclared = true;
-                    openModal(entity);
-                }
-
-                const distanceToApple = entity.distanceToApple();
-                if (distanceToApple < closestDistance) {
-                    closestDistance = distanceToApple;
-                    closestEntity = entity;
-                }
-
-                drawEntity(entity);
-
-                ctx.fillStyle = 'black';
-                ctx.font = '10px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(users[entity.userId].name, entity.position.x, entity.position.y + 10);
-                //ctx.fillText(`${entity.direction}`, entity.position.x, entity.position.y - 10);
-            });
-
-            if (closestEntity) {
-                ctx.strokeStyle = 'gold';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(closestEntity.position.x, closestEntity.position.y, 8, 0, 2 * Math.PI);
-                ctx.stroke();
-            }
-
-            updateLegendDirections();
-            tick++;
-            animationFrame = requestAnimationFrame(gameLoop);
-        }
-
-        function startGame() {
-            if (gamePaused) {
-                gamePaused = false;
-                winnerDeclared = false; // Reset winner state on start
-                animationFrame = requestAnimationFrame(gameLoop);
-            }
-        }
-
-        function pauseGame() {
-            gamePaused = true;
-            cancelAnimationFrame(animationFrame);
-        }
-
-        function restartGame() {
-            pauseGame();
-            tick = 0;
-            winnerDeclared = false;
-            document.getElementById('winner').textContent = '';
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            entities.forEach(entity => {
-                entity.position = entity.getRandomEdgePosition();
-            });
-            startGame();
-        }
-        window.addEventListener('load', initializeServerHash);
+      window.addEventListener('load', initializeServerHash);
     </script>
-</body>
+  </body>
 </html>
