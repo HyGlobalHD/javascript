@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random String Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <style>
+    #results {
+      font-family: monospace;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-top: 15px;
+    }
+    #frequency {
+      font-family: monospace;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-top: 15px;
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Random String Generator</h1>
+  <p>Enter your client seed and the number of runs:</p>
+  <label for="clientSeed">Client Seed:</label>
+  <input type="text" id="clientSeed" placeholder="Enter client seed">
+  <label for="manualServerHash">ServerHash:</label>
+  <input type="text" id="manualServerHash" placeholder="Enter server hash (optional)">
+  <br>
+  <label for="numRuns">Number of Runs:</label>
+  <input type="number" id="numRuns" min="1" value="1" required>
+  <br>
+  <br>
+  <button id="generate">Generate Random Strings</button>
+  <button id="calcServerHash">Test Server Hash</button>
+  <div id="frequency"></div>
+  <div id="results"></div>
+
+<script>
+  const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+  function generateRandomStringBasic(length) {
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return result;
+  }
+
+  // SHA-256 hash function
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+  }
+
+  document.getElementById('calcServerHash').addEventListener('click', async () => {
+    const clientSeed = document.getElementById('clientSeed').value.trim();
+    const clientHash = document.getElementById('manualServerHash').value.trim();
+    const results = document.getElementById('results');
+    // Generate a random seed combining clientSeed and a unique counter
+    const randomValue = new Math.seedrandom(`${clientHash.trim()}:${clientSeed.trim()}`)();
+    
+    results.textContent = ''; // Clear previous results
+    const resultElement = document.createElement('p');
+    resultElement.textContent = `TEST WITH CLIENT SHA: RESULT= ${randomValue}`;
+    results.appendChild(resultElement);
+  });
+  document.getElementById('generate').addEventListener('click', async () => {
+    const clientSeed = document.getElementById('clientSeed').value.trim();
+    const numRuns = parseInt(document.getElementById('numRuns').value, 10);
+
+    if (!clientSeed || numRuns < 1) {
+      alert('Please enter a valid client seed and a number of runs greater than or equal to 1.');
+      return;
+    }
+
+    const results = document.getElementById('results');
+    const frequencyDiv = document.getElementById('frequency');
+    results.textContent = ''; // Clear previous results
+    frequencyDiv.textContent = ''; // Clear previous frequency
+
+    const frequency = {
+      "0.1": 0, "0.2": 0, "0.3": 0, "0.4": 0, "0.5": 0,
+      "0.6": 0, "0.7": 0, "0.8": 0, "0.9": 0, "0.0": 0
+    };
+
+    let countSame = 0;
+
+    for (let i = 0; i < numRuns; i++) {
+      const serverSeed = generateRandomStringBasic(24);
+      const hashedServerSeed = await sha256(serverSeed);
+
+      // Generate a random seed combining clientSeed and a unique counter
+      const randomValue = new Math.seedrandom(`${serverSeed.trim()}:${clientSeed.trim()}`)();
+      const mappedValue = `0.${Math.floor(randomValue * 10)}`;
+
+      const testRandomValueSHA = new Math.seedrandom(`${hashedServerSeed.trim()}:${clientSeed.trim()}`)();
+      const testMappedValue = `0.${Math.floor(testRandomValueSHA * 10)}`;
+
+      // Update frequency
+      if (frequency[mappedValue] !== undefined) {
+        frequency[mappedValue] += 1;
+      }
+
+      // Create a result element for each run
+      const resultElement = document.createElement('p');
+
+      // Highlight if the first decimal place matches
+      if (mappedValue === testMappedValue) {
+        resultElement.style.color = "green";
+        resultElement.style.fontWeight = "bold";
+	countSame += 1;
+      }
+
+      resultElement.textContent = `Run ${i + 1}: RESULT= ${randomValue}, serverSeed: ${serverSeed}, serverHash: ${hashedServerSeed}, \ntestRESULT=${testRandomValueSHA}`;
+      results.appendChild(resultElement);
+    }
+
+    // Display frequency results
+    const frequencyContent = Object.entries(frequency)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n');
+
+    const frequencyElement = document.createElement('pre');
+    frequencyElement.textContent = `Counter Same: ${countSame} \nFrequency Distribution:\n${frequencyContent}`;
+    frequencyDiv.appendChild(frequencyElement);
+  });
+</script>
+
+
+</body>
+</html>

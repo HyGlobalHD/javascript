@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procedural World with Features</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: auto;
+        }
+        body {
+            overflow: hidden;
+            margin: 0;
+        }
+        #minimap {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border: 2px solid black;
+            background: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <h4 style="text-align: center;">Procedural World</h4>
+    <div style="text-align: center;">
+        <p>Current World Seed: <span id="currentSeed"></span></p>
+        <label for="seedInput">Enter World Seed: </label>
+        <input type="text" id="seedInput" placeholder="e.g., 12345">
+        <button id="generateButton">Generate World</button>
+    </div>
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const seedInput = document.getElementById('seedInput');
+        const generateButton = document.getElementById('generateButton');
+
+        const CHUNK_SIZE = 16;
+        const BLOCK_SIZE = 16;
+        const VIEW_DISTANCE = 3;
+        const MOVE_SPEED = 2;
+        const BIOMES = ['forest', 'tundra', 'plains'];
+        const MINIMAP_SCALE = 5;
+
+        let seed = '0';
+        let rng;
+        let character = { x: 0, y: 0 };
+        let keys = {};
+        let vegetationAnimations = [];
+        let randomEvents = [];
+
+        function initializeRNG(newSeed) {
+            rng = new Math.seedrandom(newSeed);
+        }
+
+        function random() {
+            return rng();
+        }
+
+        function updateCurrentSeedText() {
+            document.getElementById('currentSeed').textContent = seed;
+        }
+
+        function generateChunk(seed, chunkX, chunkY) {
+            const blocks = [];
+            const chunkSeed = `${seed}:${chunkX},${chunkY}`;
+            initializeRNG(chunkSeed);
+
+            // Determine biome for the chunk
+            const biome = BIOMES[Math.floor(random() * BIOMES.length)];
+
+            for (let y = 0; y < CHUNK_SIZE; y++) {
+                const row = [];
+                for (let x = 0; x < CHUNK_SIZE; x++) {
+                    const randValue = random();
+                    let block = biome === 'desert' ? 'sand' : 'grass';
+                    if (randValue > 0.8) block = 'stone';
+                    else if (randValue > 0.6) block = 'dirt';
+                    else if (randValue > 0.3 && biome !== 'desert') block = 'water';
+                    row.push({ type: block, biome });
+                }
+                blocks.push(row);
+            }
+
+            // Add vegetation
+            if (biome !== 'desert') {
+                for (let i = 0; i < 5; i++) {
+                    const vegX = Math.floor(random() * CHUNK_SIZE);
+                    const vegY = Math.floor(random() * CHUNK_SIZE);
+                    blocks[vegY][vegX] = { type: 'tree', biome };
+                }
+            }
+
+            return blocks;
+        }
+
+        function drawBlock(block, screenX, screenY) {
+            switch (block.type) {
+                case 'stone': ctx.fillStyle = 'gray'; break;
+                case 'dirt': ctx.fillStyle = 'brown'; break;
+                case 'water': ctx.fillStyle = 'blue'; break;
+                case 'grass': ctx.fillStyle = 'green'; break;
+                case 'sand': ctx.fillStyle = 'yellow'; break;
+                case 'tree': 
+                    ctx.fillStyle = 'darkgreen'; 
+                    ctx.fillRect(screenX, screenY - BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE);
+                    return;
+            }
+            ctx.fillRect(screenX, screenY, BLOCK_SIZE, BLOCK_SIZE);
+        }
+
+        function drawChunk(chunk, chunkX, chunkY) {
+            for (let y = 0; y < CHUNK_SIZE; y++) {
+                for (let x = 0; x < CHUNK_SIZE; x++) {
+                    const worldX = chunkX * CHUNK_SIZE + x;
+                    const worldY = chunkY * CHUNK_SIZE + y;
+                    const screenX = worldX * BLOCK_SIZE - character.x + canvas.width / 2;
+                    const screenY = worldY * BLOCK_SIZE - character.y + canvas.height / 2;
+
+                    drawBlock(chunk[y][x], screenX, screenY);
+                }
+            }
+        }
+
+        function drawWorld() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const currentChunkX = Math.floor(character.x / (CHUNK_SIZE * BLOCK_SIZE));
+            const currentChunkY = Math.floor(character.y / (CHUNK_SIZE * BLOCK_SIZE));
+
+            for (let chunkY = currentChunkY - VIEW_DISTANCE; chunkY <= currentChunkY + VIEW_DISTANCE; chunkY++) {
+                for (let chunkX = currentChunkX - VIEW_DISTANCE; chunkX <= currentChunkX + VIEW_DISTANCE; chunkX++) {
+                    const chunk = generateChunk(seed, chunkX, chunkY);
+                    drawChunk(chunk, chunkX, chunkY);
+                }
+            }
+
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, BLOCK_SIZE / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function handleInput() {
+            if (keys['ArrowUp'] || keys['w']) character.y -= MOVE_SPEED;
+            if (keys['ArrowDown'] || keys['s']) character.y += MOVE_SPEED;
+            if (keys['ArrowLeft'] || keys['a']) character.x -= MOVE_SPEED;
+            if (keys['ArrowRight'] || keys['d']) character.x += MOVE_SPEED;
+            drawWorld();
+            requestAnimationFrame(handleInput);
+        }
+
+        window.addEventListener('keydown', (e) => keys[e.key] = true);
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        generateButton.addEventListener('click', () => {
+            seed = seedInput.value || '0';
+            initializeRNG(seed);
+            drawWorld();
+            updateCurrentSeedText();
+        });
+
+        initializeRNG(seed);
+        drawWorld();
+        updateCurrentSeedText();
+        handleInput();
+    </script>
+</body>
+</html>
