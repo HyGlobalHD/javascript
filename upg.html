@@ -31,10 +31,13 @@
   <br>
   <label for="numRuns">Number of Runs:</label>
   <input type="number" id="numRuns" min="1" value="1" required>
+  <label for="numNounce">Number of Nounce:</label>
+  <input type="number" id="numNounce" min="1" value="1" required>
   <br>
   <br>
   <button id="generate">Generate Random Strings</button>
   <button id="calcServerHash">Test Server Hash</button>
+  <button id="testNounce">Test with Nounce</button>
   <div id="frequency"></div>
   <div id="results"></div>
 
@@ -57,6 +60,28 @@
     return hashHex;
   }
 
+  document.getElementById('testNounce').addEventListener('click', async () => {
+    const numNounce = parseInt(document.getElementById('numNounce').value, 10);
+    const clientSeed = document.getElementById('clientSeed').value.trim();
+    const clientHash = document.getElementById('manualServerHash').value.trim();
+    const results = document.getElementById('results');
+    
+    results.textContent = '';
+    for (let i = 1; i <= numNounce; i++) {
+      const serverSeed = generateRandomStringBasic(24);
+      const hashedServerSeed = await sha256(serverSeed);
+
+      // Generate a random seed combining clientSeed and a unique counter
+      const randomClientValue = new Math.seedrandom(`${clientHash.trim()}:${clientSeed.trim()}:${i}`)();
+      const randomValue = new Math.seedrandom(`${serverSeed.trim()}:${clientSeed.trim()}:${i}`)();
+
+      // Create a result element for each run
+      const resultElement = document.createElement('p');
+
+      resultElement.textContent = `Nounce ${i}: RESULT= ${randomValue}, serverSeed: ${serverSeed}, serverHash: ${hashedServerSeed}, \ntestRESULTWITHOWNSHA=${randomClientValue}`;
+      results.appendChild(resultElement);
+    }
+  });
   document.getElementById('calcServerHash').addEventListener('click', async () => {
     const clientSeed = document.getElementById('clientSeed').value.trim();
     const clientHash = document.getElementById('manualServerHash').value.trim();
