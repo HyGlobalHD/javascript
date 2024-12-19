@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provably Fair RNG</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .error { color: red; }
+        input, button { margin-bottom: 10px; padding: 5px; }
+        .result-container { text-align: center; }
+        .result-item { margin-bottom: 5px; }
+        table {
+            width: 20%;text-align: center;
+            border-collapse: collapse;
+        }
+        td, th {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <label for="serverSeed">Server Seed:</label>
+    <input type="text" id="serverSeed">
+    <button id="regenServerSeed">Regenerate</button>
+</div>
+
+<div>
+    <label for="serverHash">Server Hash:</label>
+    <input type="text" id="serverHash">
+</div>
+
+<div>
+    <label for="clientSeed">Client Seed:</label>
+    <input type="text" id="clientSeed">
+</div>
+
+<div>
+    <label for="nonce">Nonce:</label>
+    <input type="number" id="nonce" value="1">
+</div>
+
+<div>
+    <label for="rounds">Rounds:</label>
+    <input type="number" id="rounds" min="1" value="1">
+</div>
+
+<div>
+    <label for="testSHA">How many random SHA:</label>
+    <input type="number" id="testSHA" min="1" value="1">
+</div>
+
+<div>
+    <label for="testNounce">How many Nounce:</label>
+    <input type="number" id="testNounce" min="1" value="1">
+    <label for="testNounce">Random Seed Length:</label>
+    <input type="number" id="randomSeedLength" min="1" value="6">
+</div>
+
+<button id="verify">Verify</button>
+<button id="testSHAbutton">TEST RANDOM SHA</button>
+<button id="testNouncebutton">TEST SIMULATE NOUNCE</button>
+<button id="testNounceSeedbutton">TEST SIMULATE NOUNCE with random client Seed</button>
+
+<div id="prizeDetails"></div>
+<div id="result" class="result-container"></div>
+
+<script>
+    const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+    function generateRandomStringBasic(length) {
+        let result = "";
+        for (let i = 0; i < length; i++) {
+            result += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        return result;
+    }
+
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+
+    const result = document.getElementById('result');
+    const serverSeedInput = document.getElementById('serverSeed');
+    const serverHashInput = document.getElementById('serverHash');
+    const clientSeedInput = document.getElementById('clientSeed');
+    const nonceInput = document.getElementById('nonce');
+
+    function error(message) {
+        result.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    async function updateServerHash() {
+        serverHashInput.value = await sha256(serverSeedInput.value);
+    }
+
+    document.getElementById('regenServerSeed').onclick = async () => {
+        serverSeedInput.value = generateRandomStringBasic(24);
+        await updateServerHash();
+    };
+
+    serverSeedInput.value = generateRandomStringBasic(24);
+    clientSeedInput.value = generateRandomStringBasic(6);
+    updateServerHash();
+
+    document.getElementById('verify').addEventListener('click', async () => {
+        const serverSeed = serverSeedInput.value.trim();
+        const serverHash = serverHashInput.value.trim();
+        const clientSeed = clientSeedInput.value;
+        const nonce = nonceInput.value.trim();
+        const rounds = Number(document.getElementById('rounds').value);
+
+        if (!serverSeed) return error('Server seed is required');
+        if (!serverHash) return error('Server hash is required');
+        if (!clientSeed) return error('Client seed is required');
+        if (!rounds || rounds < 1) return error('Number of rounds is required');
+
+        const isHashValid = await sha256(serverSeed) === serverHash;
+
+        let results = '';
+        for (let i = 1; i <= rounds; i++) {
+            const rollNumber = new Math.seedrandom(`${serverSeed}:${clientSeed}:${nonce}:${i}`)();
+            const ticket = Math.floor(rollNumber * 100_000);
+            results += `<div class="result-item">Round ${i} - Ticket: ${ticket}</div>`;
+        }
+
+        result.innerHTML = `
+          <div class="result-container">
+            <div class="font-bold my-2 uppercase text-xl">
+              ${isHashValid ? '<div class="text-green-500">Game is valid</div>' : '<div class="text-red-500">Game is invalid</div>'}
+            </div>
+            ${results}
+          </div>`;
+
+        clientSeedInput.value = generateRandomStringBasic(6);
+        nonceInput.value = parseInt(nonceInput.value) + 1;
+    });
+document.getElementById('testSHAbutton').addEventListener('click', async () => {
+    const serverSeed = serverSeedInput.value.trim();
+    const clientSeed = clientSeedInput.value;
+    const roundSHA = Number(document.getElementById('testSHA').value);
+    const nonce = nonceInput.value.trim();
+    const rounds = Number(document.getElementById('rounds').value);
+
+    if (!serverSeed) return error('Server seed is required');
+    if (!clientSeed) return error('Client seed is required');
+    if (!rounds || rounds < 1) return error('Number of rounds is required');
+
+    const frequency = {};
+    const consecutiveGroups = [];
+    let previousGroup = null;
+    let consecutiveCount = 0;
+
+    let results = '';
+    for (let a = 0; a < roundSHA; a++) {
+        const newServerSeed = generateRandomStringBasic(24);
+        for (let i = 1; i <= rounds; i++) {
+            const rollNumber = new Math.seedrandom(`${newServerSeed}:${clientSeed}:${nonce}:${i}`)();
+            const ticket = Math.floor(rollNumber * 100_000);
+
+            // Categorize ticket into specific detailed groups
+            const rangeKey = categorizeTicket(ticket);
+            frequency[rangeKey] = (frequency[rangeKey] || 0) + 1;
+
+            // Track consecutive occurrences
+            if (rangeKey === previousGroup) {
+                consecutiveCount++;
+            } else {
+                if (consecutiveCount > 2) {
+                    consecutiveGroups.push({ group: previousGroup, count: consecutiveCount });
+                }
+                previousGroup = rangeKey;
+                consecutiveCount = 1;
+            }
+
+            results += `<div class="result-item">ServerSeed: ${newServerSeed} Round ${i} - Ticket: ${ticket}</div>`;
+        }
+    }
+
+    // Finalize consecutive groups if the last group meets the condition
+    if (consecutiveCount > 2) {
+        consecutiveGroups.push({ group: previousGroup, count: consecutiveCount });
+    }
+
+    // Prepare sorted frequency analysis data
+    const sortedFrequency = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+
+    let frequencyAnalysis = '<h3>Frequency Analysis (Sorted):</h3>';
+    frequencyAnalysis += '<table><tr><th>Category</th><th>Frequency</th></tr>';
+    for (const [range, freq] of sortedFrequency) {
+        frequencyAnalysis += `<tr><td>${range}</td><td>${freq}</td></tr>`;
+    }
+    frequencyAnalysis += '</table>';
+
+    // Prepare consecutive group analysis data
+    let consecutiveAnalysis = '<h3>Consecutive Group Analysis:</h3>';
+    if (consecutiveGroups.length === 0) {
+        consecutiveAnalysis += '<p>No groups appeared more than twice consecutively.</p>';
+    } else {
+        consecutiveAnalysis += '<table><tr><th>Group</th><th>Consecutive Count</th></tr>';
+        for (const group of consecutiveGroups) {
+            consecutiveAnalysis += `<tr><td>${group.group}</td><td>${group.count}</td></tr>`;
+        }
+        consecutiveAnalysis += '</table>';
+    }
+
+    result.innerHTML = `
+      <div class="result-container">
+        ${frequencyAnalysis}
+        ${consecutiveAnalysis}
+        ${results}
+      </div>`;
+});
+
+document.getElementById('testNouncebutton').addEventListener('click', async () => {
+    const serverSeed = serverSeedInput.value.trim();
+    const serverHash = serverHashInput.value.trim();
+    const clientSeed = clientSeedInput.value;
+    const rounds = Number(document.getElementById('rounds').value);
+    const nounceRound = Number(document.getElementById('testNounce').value);
+
+    if (!serverSeed) return error('Server seed is required');
+    if (!serverHash) return error('Server hash is required');
+    if (!clientSeed) return error('Client seed is required');
+    if (!rounds || rounds < 1) return error('Number of rounds is required');
+
+    const isHashValid = await sha256(serverSeed) === serverHash;
+
+    const frequency = {};
+    const consecutiveGroups = [];
+    let previousGroup = null;
+    let consecutiveCount = 0;
+
+    let results = '';
+    for (let nounce = 1; nounce <= nounceRound; nounce++) {
+        for (let round = 1; round <= rounds; round++) {
+            const rollNumber = new Math.seedrandom(`${serverSeed}:${clientSeed}:${nounce}:${round}`)();
+            const ticket = Math.floor(rollNumber * 100_000);
+
+            // Categorize ticket into specific detailed groups
+            const rangeKey = categorizeTicket(ticket);
+            frequency[rangeKey] = (frequency[rangeKey] || 0) + 1;
+
+            // Track consecutive occurrences
+            if (rangeKey === previousGroup) {
+                consecutiveCount++;
+            } else {
+                if (consecutiveCount > 2) {
+                    consecutiveGroups.push({ group: previousGroup, count: consecutiveCount });
+                }
+                previousGroup = rangeKey;
+                consecutiveCount = 1;
+            }
+
+            results += `<div class="result-item">Nounce: ${nounce} - Ticket: ${ticket} - Round: ${round}</div>`;
+        }
+    }
+
+    // Finalize consecutive groups if the last group meets the condition
+    if (consecutiveCount > 2) {
+        consecutiveGroups.push({ group: previousGroup, count: consecutiveCount });
+    }
+
+    // Prepare sorted frequency analysis data
+    const sortedFrequency = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+
+    let frequencyAnalysis = '<h3>Frequency Analysis (Sorted):</h3>';
+    frequencyAnalysis += '<table><tr><th>Category</th><th>Frequency</th></tr>';
+    for (const [range, freq] of sortedFrequency) {
+        frequencyAnalysis += `<tr><td>${range}</td><td>${freq}</td></tr>`;
+    }
+    frequencyAnalysis += '</table>';
+
+    // Prepare consecutive group analysis data
+    let consecutiveAnalysis = '<h3>Consecutive Group Analysis:</h3>';
+    if (consecutiveGroups.length === 0) {
+        consecutiveAnalysis += '<p>No groups appeared more than twice consecutively.</p>';
+    } else {
+        consecutiveAnalysis += '<table><tr><th>Group</th><th>Consecutive Count</th></tr>';
+        for (const group of consecutiveGroups) {
+            consecutiveAnalysis += `<tr><td>${group.group}</td><td>${group.count}</td></tr>`;
+        }
+        consecutiveAnalysis += '</table>';
+    }
+
+    result.innerHTML = `
+      <div class="result-container">
+        <div class="font-bold my-2 uppercase text-xl">
+          ${isHashValid ? '<div class="text-green-500">Game is valid</div>' : '<div class="text-red-500">Game is invalid</div>'}
+        </div>
+        ${frequencyAnalysis}
+        ${consecutiveAnalysis}
+        ${results}
+      </div>`;
+});
+
+document.getElementById('testNounceSeedbutton').addEventListener('click', async () => {
+    const serverSeed = serverSeedInput.value.trim();
+    const serverHash = serverHashInput.value.trim();
+    const rounds = Number(document.getElementById('rounds').value);
+    const nounceRound = Number(document.getElementById('testNounce').value);
+    const randomSeedLength = Number(document.getElementById('randomSeedLength').value);
+
+
+    if (!serverSeed) return error('Server seed is required');
+    if (!serverHash) return error('Server hash is required');
+    if (!clientSeed) return error('Client seed is required');
+    if (!rounds || rounds < 1) return error('Number of rounds is required');
+
+    const isHashValid = await sha256(serverSeed) === serverHash;
+
+    const frequency = {};
+    const consecutiveGroups = [];
+    let previousGroup = null;
+    let consecutiveCount = 0;
+
+    let results = '';
+    for (let nounce = 1; nounce <= nounceRound; nounce++) {
+        for (let round = 1; round <= rounds; round++) {
+            const clientSeed = generateRandomStringBasic(randomSeedLength);
+            const rollNumber = new Math.seedrandom(`${serverSeed}:${clientSeed}:${nounce}:${round}`)();
+            const ticket = Math.floor(rollNumber * 100_000);
+
+            // Categorize ticket into specific detailed groups
+            const rangeKey = categorizeTicket(ticket);
+            frequency[rangeKey] = (frequency[rangeKey] || 0) + 1;
+
+            // Track consecutive occurrences
+            if (rangeKey === previousGroup) {
+                consecutiveCount++;
+            } else {
+                if (consecutiveCount > 2) {
+                    consecutiveGroups.push({ group: previousGroup, count: consecutiveCount });
+                }
+                previousGroup = rangeKey;
+                consecutiveCount = 1;
+            }
+
+            results += `<div class="result-item">Nounce: ${nounce} - Ticket: ${ticket} - Round: ${round} - ClientSeed: ${clientSeed}</div>`;
+        }
+    }
+
+    // Finalize consecutive groups if the last group meets the condition
+    if (consecutiveCount > 2) {
+        consecutiveGroups.push({ group: previousGroup, count: consecutiveCount });
+    }
+
+    // Prepare sorted frequency analysis data
+    const sortedFrequency = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+
+    let frequencyAnalysis = '<h3>Frequency Analysis (Sorted):</h3>';
+    frequencyAnalysis += '<table><tr><th>Category</th><th>Frequency</th></tr>';
+    for (const [range, freq] of sortedFrequency) {
+        frequencyAnalysis += `<tr><td>${range}</td><td>${freq}</td></tr>`;
+    }
+    frequencyAnalysis += '</table>';
+
+    // Prepare consecutive group analysis data
+    let consecutiveAnalysis = '<h3>Consecutive Group Analysis:</h3>';
+    if (consecutiveGroups.length === 0) {
+        consecutiveAnalysis += '<p>No groups appeared more than twice consecutively.</p>';
+    } else {
+        consecutiveAnalysis += '<table><tr><th>Group</th><th>Consecutive Count</th></tr>';
+        for (const group of consecutiveGroups) {
+            consecutiveAnalysis += `<tr><td>${group.group}</td><td>${group.count}</td></tr>`;
+        }
+        consecutiveAnalysis += '</table>';
+    }
+
+    result.innerHTML = `
+      <div class="result-container">
+        <div class="font-bold my-2 uppercase text-xl">
+          ${isHashValid ? '<div class="text-green-500">Game is valid</div>' : '<div class="text-red-500">Game is invalid</div>'}
+        </div>
+        ${frequencyAnalysis}
+        ${consecutiveAnalysis}
+        ${results}
+      </div>`;
+});
+
+// Function to categorize tickets into precise groups
+function categorizeTicket(ticket) {
+    const ticketStr = ticket.toString();
+    const leadingDigit = ticketStr[0]; // First digit of the ticket
+    const trailingLength = ticketStr.length - 1; // Count of trailing digits (x's)
+
+    if (trailingLength === 0) return `${leadingDigit}`; // Single-digit numbers
+    return `${leadingDigit}${'x'.repeat(trailingLength)}`; // Format like 1x, 2xx, etc.
+}
+
+
+</script>
+
+</body>
+</html>
