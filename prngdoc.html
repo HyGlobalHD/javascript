@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRNG Documentation</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background: #1e1e1e;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 2px solid #333;
+        }
+        header h1 {
+            margin: 0;
+            color: #76c7c0;
+        }
+        main {
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        section {
+            margin-bottom: 2rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #1e1e1e;
+        }
+        section h2 {
+            color: #76c7c0;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f1f1f1;
+            padding: 1rem;
+            overflow-x: auto;
+            border-radius: 5px;
+        }
+        code {
+            color: #ffab40;
+        }
+        .note {
+            color: #ffa726;
+            font-style: italic;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background: #1e1e1e;
+            border-top: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PRNG (Pseudorandom Number Generator)</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Introduction</h2>
+            <p><strong>Source:</strong> Wikipedia</p>
+            <p>A pseudorandom number generator (PRNG), also known as a deterministic random bit generator (DRBG), is an algorithm for generating a sequence of numbers whose properties approximate the properties of sequences of random numbers. The PRNG-generated sequence is not truly random because it is completely determined by an initial value, called the PRNG's seed (which may include truly random values).</p>
+            <p>Although sequences closer to truly random can be generated using hardware random number generators, pseudorandom number generators are important in practice for their speed in number generation and their reproducibility.</p>
+            <p class="note">Note: Reproducibility means the outcome is the same with the same seed.</p>
+            <p class="note">However, users who know the PRNG algorithm can still cheat results by knowing the seed. By including time as part of the seed, results become unpredictable due to the continuously changing time.</p>
+        </section>
+        <section>
+            <h2>Nightbot Commands Using PRNG</h2>
+
+            <h3>!coinflip</h3>
+            <pre><code>$(eval var d=new Date(),s=d.toLocaleDateString('en-GB')+":"+d.getHours()+"/"+d.getMinutes()+"/"+d.getSeconds(),prng=s=&gt;{var h=0;for(var i=0;i&lt;s.length;i++)h=(h&lt;&lt;5)-h+s.charCodeAt(i),h|=0;return Math.abs(h%2)};prng(s)===0?"Heads":"Tails")</code></pre>
+            <p class="note">Seed: today's date + hours + minutes + seconds</p>
+
+            <h3>!love</h3>
+            <pre><code>$(eval var user=`$(user)`.trim(),touser=`$(touser)`.replace(/^@+/,""),date=new Date().toLocaleDateString('en-GB'),seed=user+touser+date,prng=s=&gt;{var h=0;for(var i=0;i&lt;s.length;i++)h=(h&lt;&lt;5)-h+s.charCodeAt(i),h|=0;return Math.abs(h%101)};`There is a ${prng(seed)}% chance of love between ${user} and ${touser}.`)</code></pre>
+            <p class="note">Seed: username + target username + today's date</p>
+
+            <h3>!pp</h3>
+            <pre><code>$(eval var input=`$(query)`.replace(/^@+/,""),user=input!==""?input:`$(user)`,date=new Date().toLocaleDateString('en-GB'),seed=user+date,prng=t=&gt;{var h=0;for(var i=0;i&lt;t.length;i++)h=(h&lt;&lt;5)-h+t.charCodeAt(i),h|=0;return Math.abs(h%21)};`@${user}, wow, a whopping ${prng(seed)} inches?`)</code></pre>
+            <p class="note">Seed: username + today's date</p>
+
+            <h3>!rizz</h3>
+            <pre><code>$(eval var user=`$(user)`.trim(),date=new Date().toLocaleDateString('en-GB'),seed=user+date,prng=s=&gt;{var h=0;for(var i=0;i&lt;s.length;i++)h=(h&lt;&lt;5)-h+s.charCodeAt(i),h|=0;return Math.abs(h%11)};`${user} has ${prng(seed)}/10 rizz DinoDance`)</code></pre>
+            <p class="note">Seed: username + today's date</p>
+        </section>
+        <section>
+            <h2>Credits</h2>
+            <p>By April. For inquiries or suggestions, feel free to ask!</p>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 April's PRNG Documentation</p>
+    </footer>
+</body>
+</html>
