@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provably Fair RNG</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th { background-color: #f2f2f2; }
+        .error { color: red; }
+        input, select, button { margin-bottom: 10px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <div>
+        <label for="serverSeed">Server Seed:</label>
+        <input type="text" id="serverSeed" readonly>
+        <button id="regenServerSeed">Regenerate Server Seed</button>
+    </div>
+
+    <div>
+        <label for="serverHash">Server Hash:</label>
+        <input type="text" id="serverHash" readonly>
+    </div>
+
+    <div>
+        <label for="blockHash">Block Hash:</label>
+        <input type="text" id="blockHash" readonly>
+        <button id="regenBlockHash">Regenerate Block Hash</button>
+    </div>
+
+    <div>
+        <label for="rounds">Rounds:</label>
+        <input type="number" id="rounds" min="1" value="1">
+    </div>
+
+    <div>
+        <label for="type">Type:</label>
+        <select id="type">
+            <option value="1vs1">1vs1</option>
+            <option value="1vs1vs1">1vs1vs1</option>
+            <option value="2vs2">2vs2</option>
+            <option value="3vs3">3vs3</option>
+        </select>
+    </div>
+
+    <button id="verify">Verify</button>
+    <button id="generateBoth">Generate Both</button>
+    <div id="result"></div>
+<script>
+(async () => {
+    const result = document.getElementById('result');
+    const serverSeedInput = document.getElementById('serverSeed');
+    const serverHashInput = document.getElementById('serverHash');
+    const blockHashInput = document.getElementById('blockHash');
+
+    const charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+    function error(message) {
+        result.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    let methodIndex = 0;
+
+    async function sha256(message) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(message);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        return Array.from(new Uint8Array(hashBuffer))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+    }
+
+    function generateRandomStringBasic(length) {
+        let result = "";
+        for (let i = 0; i < length; i++) {
+            result += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        return result;
+    }
+
+    function generateRandomStringCrypto(length) {
+        let result = "";
+        const array = new Uint32Array(length);
+        crypto.getRandomValues(array);
+        for (let i = 0; i < length; i++) {
+            result += charset.charAt(array[i] % charset.length);
+        }
+        return result;
+    }
+
+    function generateRandomStringIterativeMap(length) {
+        return Array.from({ length }, () => charset[Math.floor(Math.random() * charset.length)]).join("");
+    }
+
+    function generateRandomString(length) {
+        const methods = [
+            generateRandomStringBasic,
+            generateRandomStringCrypto,
+            generateRandomStringIterativeMap,
+        ];
+        const selectedMethod = methods[methodIndex];
+        methodIndex = (methodIndex + 1) % methods.length; // Move to the next method
+        return selectedMethod(length);
+    }
+
+    async function updateServerHash() {
+        serverHashInput.value = await sha256(serverSeedInput.value);
+    }
+
+    document.getElementById('regenServerSeed').onclick = async () => {
+        serverSeedInput.value = generateRandomString(32);
+        await updateServerHash();
+    };
+
+    async function updateBlockHash() {
+    const blockSeed = generateRandomString(64);
+    blockHashInput.value = await sha256(blockSeed);
+    console.log(blockSeed);
+    }
+
+    document.getElementById('regenBlockHash').onclick = async () => {
+        await updateBlockHash();
+    };
+    
+    document.getElementById('generateBoth').onclick = async () => {
+        await updateBlockHash();
+        serverSeedInput.value = generateRandomString(32);
+        await updateServerHash();
+    	
+    };
+document.getElementById('verify').onclick = async () => {
+    const serverSeed = serverSeedInput.value;
+    const serverHash = serverHashInput.value;
+    const blockHash = blockHashInput.value;
+    const rounds = Number(document.getElementById('rounds').value);
+    const type = document.getElementById('type').value;
+
+    if (!serverSeed) return error('Server seed is required');
+    if (!serverHash) return error('Server hash is required');
+    if (!blockHash) return error('Block hash is required');
+    if (!rounds || rounds < 1) return error('Number of rounds is required');
+
+    // Step 1: Verify the server seed hash matches
+    const computedHash = await sha256(serverSeed);
+    if (computedHash !== serverHash) return error('Server seed hash does not match');
+
+    const slots = {
+        '1vs1': 2,
+        '1vs1vs1': 3,
+        '2vs2': 4,
+        '3vs3': 6
+    }[type];
+
+    // Step 2: Initialize frequency counter
+    const frequency = {
+        "0.0": 0, "0.1": 0, "0.2": 0, "0.3": 0, "0.4": 0,
+        "0.5": 0, "0.6": 0, "0.7": 0, "0.8": 0, "0.9": 0
+    };
+
+    // Step 3: Generate random outcomes using the game seed
+    let results = '<table>';
+    results += '<thead><tr><th>Round</th>';
+
+    for (let slot = 1; slot <= slots; slot++) {
+        results += `<th>Slot ${slot}</th>`;
+    }
+    results += '</tr></thead><tbody>';
+
+    const gameSeed = serverSeed + blockHash;
+
+    for (let round = 0; round < rounds; round++) {
+        results += `<tr><td>#${round + 1}</td>`;
+
+        for (let slot = 1; slot <= slots; slot++) {
+            const seed = `${gameSeed}:${round + 1}:${slot}`;
+            const myrng = new Math.seedrandom(seed);
+            const rng = myrng();
+            const roundedValue = `0.${Math.floor(rng * 10)}`;
+
+            // Update frequency
+            if (frequency[roundedValue] !== undefined) {
+                frequency[roundedValue]++;
+            }
+
+            results += `<td>${roundedValue} (${Math.floor(rng * 100_000)})</td>`;
+        }
+
+        results += '</tr>';
+    }
+
+    results += '</tbody></table>';
+
+    // Step 4: Display frequency results
+    const frequencyContent = Object.entries(frequency)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('<br>');
+
+    result.innerHTML = `
+        <h3>Frequency Distribution</h3>
+        <pre>${frequencyContent}</pre>
+        <h3>Individual Results</h3>
+        ${results}
+    `;
+};
+
+
+
+    // Initial setup
+    serverSeedInput.value = generateRandomString(32);
+    const blockSeed = generateRandomString(64);
+    blockHashInput.value = await sha256(blockSeed);
+    console.log(blockSeed);
+    await updateServerHash();
+})();
+</script>
+
+</body>
+</html>
