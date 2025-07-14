@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Ticket Range Distributor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .item {
+            margin-bottom: 15px;
+            border: 1px solid #444;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #1e1e1e;
+        }
+        .item span {
+            font-weight: bold;
+        }
+        .remove-item {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button {
+            background-color: #1e90ff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        input {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border: 1px solid #444;
+            border-radius: 3px;
+            padding: 5px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1e90ff;
+        }
+        .floating-controls {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background-color: #1e1e1e;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+        }
+        .floating-controls span {
+            display: block;
+            margin-top: 10px;
+        }
+        #itemsContainer {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Item Ticket Range Distributor</h1>
+    <div class="floating-controls">
+        <button id="addItem">Add Item</button>
+        <span>Total Items: <span id="itemCount">0</span></span>
+        <span>Total Percentage: <span id="totalPercentage">0.000</span></span>
+        <span>Total Container Price: <span id="totalContainerPrice">0.00</span></span>
+    </div>
+    <div id="itemsContainer"></div>
+
+    <script>
+        let itemCount = 0;
+
+        function updateItemCount() {
+            const itemElements = document.querySelectorAll('.item');
+            itemCount = itemElements.length;
+            document.getElementById('itemCount').textContent = itemCount;
+            document.getElementById('addItem').disabled = itemCount >= 50;
+            updateTotalPercentage();
+            updateTotalContainerPrice();
+        }
+
+        function updateTotalPercentage() {
+            const items = document.querySelectorAll('.item');
+            let totalPercentage = 0;
+
+            items.forEach(item => {
+                const percentageInput = item.querySelector('.percentage');
+                totalPercentage += parseFloat(percentageInput.value);
+            });
+
+            document.getElementById('totalPercentage').textContent = totalPercentage.toFixed(3);
+        }
+
+        function updateTotalContainerPrice() {
+            const items = document.querySelectorAll('.item');
+            let totalPrice = 0;
+
+            items.forEach(item => {
+                const priceInput = item.querySelector('.price');
+                const percentageInput = item.querySelector('.percentage');
+                const equivalentDisplay = item.querySelector('.equivalentValue');
+
+                const price = parseFloat(priceInput.value) || 0;
+                const percentage = parseFloat(percentageInput.value) || 0;
+
+                // Adjust calculation to round percentage properly
+                const equivalentValue = Math.round(percentage * 1000) / 99999; // 100000
+                const itemEquivalentPrice = price * equivalentValue;
+
+                equivalentDisplay.textContent = `Price Equivalent: ${itemEquivalentPrice.toFixed(2)}`;
+                totalPrice += itemEquivalentPrice;
+            });
+
+            document.getElementById('totalContainerPrice').textContent = totalPrice.toFixed(2);
+        }
+
+        function recalculateRanges() {
+            const items = document.querySelectorAll('.item');
+            let currentStart = 0;
+
+            items.forEach(item => {
+                const ticketInput = item.querySelector('.ticketRange');
+                const percentageInput = item.querySelector('.percentage');
+                const rangeDisplay = item.querySelector('.rangeDisplay');
+
+                const percentage = parseFloat(percentageInput.value);
+                const ticketEnd = Math.floor(currentStart + (percentage * 999));
+
+                rangeDisplay.textContent = `${currentStart} - ${ticketEnd}`;
+                ticketInput.min = currentStart + 1;
+                ticketInput.value = ticketEnd;
+                currentStart = ticketEnd + 1;
+            });
+
+            updateTotalPercentage();
+            updateTotalContainerPrice();
+        }
+
+        document.getElementById('addItem').addEventListener('click', () => {
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('item');
+            itemDiv.innerHTML = `
+                <p>Item <span>${itemCount + 1}</span></p>
+                <label>Price: 
+                    <input type="number" class="price" min="0" step="0.01">
+                </label>
+                <br>
+                <label>Percentage (min 0.001): 
+                    <input type="number" class="percentage" min="0.001" step="0.001" value="0.001">
+                </label>
+                <br>
+                <label>Ticket Range End: 
+                    <input type="number" class="ticketRange" min="0" step="1" value="0" readonly>
+                </label>
+                <p>Ticket Range: <span class="rangeDisplay">0 - 0</span></p>
+                <p class="equivalentValue">Price Equivalent: 0.00</p>
+                <button class="remove-item">Remove Item</button>
+            `;
+
+            const percentageInput = itemDiv.querySelector('.percentage');
+            const priceInput = itemDiv.querySelector('.price');
+            const removeButton = itemDiv.querySelector('.remove-item');
+
+            percentageInput.addEventListener('input', () => {
+                recalculateRanges();
+                updateTotalContainerPrice();
+            });
+
+            priceInput.addEventListener('input', updateTotalContainerPrice);
+
+            removeButton.addEventListener('click', () => {
+                itemDiv.remove();
+                recalculateRanges();
+                updateItemCount();
+            });
+
+            document.getElementById('itemsContainer').appendChild(itemDiv);
+
+            recalculateRanges();
+            updateItemCount();
+        });
+    </script>
+</body>
+</html>
