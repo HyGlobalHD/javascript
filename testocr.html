@@ -26,7 +26,7 @@
 </head>
 <body>
   <h2>Scan Text → Convert to Barcode</h2>
-  <video id="video" width="300" height="200" autoplay></video>
+  <video id="video" width="300" height="200" autoplay playsinline></video>
   <br>
   <button onclick="captureAndConvert()">Capture & Convert</button>
   <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
@@ -34,11 +34,26 @@
   <svg id="barcode"></svg>
 
   <script>
-    // Start webcam
     const video = document.getElementById('video');
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream)
-      .catch(err => alert("Camera error: " + err));
+
+    async function startCamera() {
+      try {
+        // Try back camera first
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: "environment" } }
+        });
+        video.srcObject = stream;
+      } catch (err) {
+        console.warn("Back camera not available, switching to front. Error:", err);
+        // Fallback to front camera
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" }
+        });
+        video.srcObject = stream;
+      }
+    }
+
+    startCamera();
 
     function captureAndConvert() {
       const canvas = document.getElementById('canvas');
