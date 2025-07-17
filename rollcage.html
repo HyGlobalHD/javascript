@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barcode Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #generateBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+
+    #viewer {
+      display: none; /* shown after generation */
+      text-align: center;
+    }
+
+    #barcodeContainer svg {
+      width: 250px;
+      height: 100px;
+    }
+
+    #codeText {
+      margin-top: 10px;
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+
+    #navigator {
+      margin-top: 15px;
+    }
+
+    #navigator button {
+      padding: 6px 14px;
+      margin: 0 10px;
+      font-size: 14px;
+    }
+
+    #counter {
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <button id="generateBtn">Generate Barcodes</button>
+
+  <div id="viewer">
+    <div id="barcodeContainer">
+      <svg id="barcodeSvg"></svg>
+    </div>
+    <div id="codeText"></div>
+    <div id="navigator">
+      <button id="prevBtn">Prev</button>
+      <span id="counter">1/27</span>
+      <button id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <script>
+    const prefix = "2017";
+    const mids = ["02", "03", "05"];
+    const totalCount = 27;
+
+    let codes = [];
+    let currentIndex = 0;
+
+    function randomSixDigits() {
+      let num = "";
+      for (let i = 0; i < 6; i++) {
+        num += Math.floor(Math.random() * 10);
+      }
+      return num;
+    }
+
+    function generateUniqueCodes() {
+      const set = new Set();
+      while (set.size < totalCount) {
+        const mid = mids[Math.floor(Math.random() * mids.length)];
+        const code = prefix + mid + randomSixDigits();
+        set.add(code);
+      }
+      return Array.from(set);
+    }
+
+    function showIndex(idx) {
+      const code = codes[idx];
+
+      // Render barcode
+      JsBarcode("#barcodeSvg", code, { format: "CODE128", displayValue: false });
+
+      // Update text & counter
+      document.getElementById("codeText").textContent = code;
+      document.getElementById("counter").textContent = `${idx + 1}/${codes.length}`;
+
+      // Enable/disable buttons at edges
+      document.getElementById("prevBtn").disabled = idx === 0;
+      document.getElementById("nextBtn").disabled = idx === codes.length - 1;
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", () => {
+      codes = generateUniqueCodes();
+      currentIndex = 0;
+      document.getElementById("viewer").style.display = "block";
+      showIndex(currentIndex);
+    });
+
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showIndex(currentIndex);
+      }
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      if (currentIndex < codes.length - 1) {
+        currentIndex++;
+        showIndex(currentIndex);
+      }
+    });
+  </script>
+</body>
+</html>
