@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Camera Text to Barcode</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    video, canvas {
+      border: 1px solid black;
+      max-width: 100%;
+    }
+    #outputText {
+      margin-top: 10px;
+      font-size: 1.2em;
+    }
+    #barcode {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Scan Text → Convert to Barcode</h2>
+  <video id="video" width="300" height="200" autoplay></video>
+  <br>
+  <button onclick="captureAndConvert()">Capture & Convert</button>
+  <canvas id="canvas" width="300" height="200" style="display:none;"></canvas>
+  <p id="outputText"></p>
+  <svg id="barcode"></svg>
+
+  <script>
+    // Start webcam
+    const video = document.getElementById('video');
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream)
+      .catch(err => alert("Camera error: " + err));
+
+    function captureAndConvert() {
+      const canvas = document.getElementById('canvas');
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      Tesseract.recognize(canvas, 'eng', { logger: m => console.log(m) })
+        .then(({ data: { text } }) => {
+          const cleanedText = text.trim().replace(/\s+/g, '');
+          document.getElementById('outputText').textContent = `Recognized Text: ${cleanedText}`;
+          if (cleanedText) {
+            JsBarcode("#barcode", cleanedText, {
+              format: "CODE128",
+              lineColor: "#000",
+              width: 2,
+              height: 100,
+              displayValue: true
+            });
+          } else {
+            alert("No text detected!");
+          }
+        })
+        .catch(err => alert("OCR error: " + err));
+    }
+  </script>
+</body>
+</html>
